@@ -40,12 +40,12 @@ camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw
 engine::engine()
 {
     _window = nullptr;
-    _screenWidth = 920;
-    _screenHeight = 720;
+    _screenWidth = 1600;
+    _screenHeight = 900;
     _resRatio = _screenWidth / _screenHeight;
     _cam = new camera(180, 90, 1);
     _windowState = windowState::RUN;
-	_fpsMax = 60;
+	_fpsMax = 120;
 }
 
 engine::~engine(){}
@@ -233,19 +233,19 @@ void engine::user_input()
 
     if (keystate[SDL_SCANCODE_A])
     {
-        _cam->yaw = std::fmod(_cam->yaw + 0.0002f + 360.0f, 360);
+        _cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
     }
     if (keystate[SDL_SCANCODE_D])
     {
-        _cam->yaw = std::fmod(_cam->yaw - 0.0002f + 360.0f, 360);
+        _cam->yaw = std::fmod(_cam->yaw - 0.0015f + 360.0f, 360);
     }
     if (keystate[SDL_SCANCODE_W])
     {
-        _cam->pit = _cam->pit + 0.0002f;
+        _cam->pit = _cam->pit + 0.0015f;
     }
     if (keystate[SDL_SCANCODE_S])
     {
-        _cam->pit = _cam->pit - 0.0002f;
+        _cam->pit = _cam->pit - 0.0015f;
     }
     if (keystate[SDL_SCANCODE_Q])
     {
@@ -303,7 +303,8 @@ void engine::engine_loop()
 
 		//render
 		render_world();
-
+		
+		static float frameTime = SDL_GetTicks() - frameStart;
 		//adjust simulation speed for framerate
 		accumulator += accumulatorTime;
 		while(accumulator >= 1.0f/10.0f)
@@ -313,13 +314,14 @@ void engine::engine_loop()
 		}
 
 		//regulate fps
+		/*
 		if (frameCount==30)
 		{
 			std::cout << _fps << std::endl;
 			frameCount = 0;
 		}
 		frameCount++;
-		static float frameTime = SDL_GetTicks() - frameStart;
+		*/
 		if(1000.0f / _fpsMax > frameTime){
 			SDL_Delay((1000.0f / _fpsMax) - frameTime);
 		}
