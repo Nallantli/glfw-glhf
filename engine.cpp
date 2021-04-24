@@ -39,12 +39,21 @@ camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw
 
 engine::engine()
 {
+<<<<<<< HEAD
 	_window = nullptr;
 	_screenWidth = 1920;
 	_screenHeight = 1080;
 	_resRatio = _screenWidth / _screenHeight;
 	_cam = new camera(180, 90, 1);
 	_windowState = windowState::RUN;
+=======
+    _window = nullptr;
+    _screenWidth = 900;
+    _screenHeight = 900;
+    _resRatio = _screenWidth / _screenHeight;
+    _cam = new camera(180, 90, 1);
+    _windowState = windowState::RUN;
+>>>>>>> 3e2860872668b6685a55c380b0f3f8a4f30178a8
 	_fpsMax = 120;
 }
 
@@ -60,8 +69,13 @@ void engine::run()
 void engine::init_engine()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
+<<<<<<< HEAD
 	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL);
 	if (_window == nullptr) {
+=======
+	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | !SDL_WINDOW_FULLSCREEN);	
+	if(_window == nullptr){
+>>>>>>> 3e2860872668b6685a55c380b0f3f8a4f30178a8
 		std::cerr << "SDL_window could not be created.";
 	}
 
