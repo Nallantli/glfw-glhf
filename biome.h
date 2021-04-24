@@ -1,6 +1,9 @@
+#ifndef BIOME_H
+#define BIOME_H
+
 #include<string>
 
-static const float clamp(const float &lower, const float &upper, const float &n)
+static const float clamp( const float &n, const float &lower, const float &upper)
 {
 	float x = n;
 	while (x < lower)
@@ -9,7 +12,6 @@ static const float clamp(const float &lower, const float &upper, const float &n)
 		x -= (upper - lower);
 	return x;
 }
-
 struct biome_t
 {
 	const float r, g, b;
@@ -54,3 +56,5 @@ static const biome_t biome_map[6][7] = {
 	{STEPPE, PRAIRIE, PRAIRIE, SHRUBLAND, SHRUBLAND, TAIGA, BOREAL_FOREST},
 	{SCORCHED, BARREN_FIELDS, BOREAL_TUNDRA, BOREAL_TUNDRA, TUNDRA, TUNDRA, ICE_CAPS}
 };
+
+#endif

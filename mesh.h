@@ -1,3 +1,6 @@
+#ifndef MESH_H
+#define MESH_H
+
 #include <eigen3/Eigen/Dense>
 #include <vector>
 #include "biome.h"
@@ -69,3 +72,5 @@ private:
 	c_point c_center;
 	void set_center();
 };
+
+#endif

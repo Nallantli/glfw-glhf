@@ -1,3 +1,6 @@
+#ifndef PERLIN_H
+#define PERLIN_H
+
 #include <stdio.h>
 
 static int SEED = 0;
@@ -65,3 +68,5 @@ static float perlin2d(float x, float y, float freq, int depth)
 
 	return fin / div;
 }
+
+#endif
