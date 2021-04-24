@@ -259,23 +259,30 @@ void engine::user_input()
 				break;
 			case SDL_MOUSEMOTION:
 				std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
+				break;
 			case SDL_KEYDOWN:
-				if (evnt.key.keysym.scancode == SDL_SCANCODE_1) {
-					mode = MODE_WIRE;
-					break;
+				switch (evnt.key.keysym.scancode) {
+					case SDL_SCANCODE_1:
+						mode = MODE_WIRE;
+						break;
+					case SDL_SCANCODE_2:
+						mode = MODE_FLAT;
+						break;
+					case SDL_SCANCODE_3:
+						mode = MODE_DATA;
+						break;
+					case SDL_SCANCODE_4:
+						mode = MODE_FOEHN;
+						break;
+					case SDL_SCANCODE_ESCAPE:
+						_windowState = windowState::EXIT;
+						break;
+					default:
+						break;
 				}
-				if (evnt.key.keysym.scancode == SDL_SCANCODE_2) {
-					mode = MODE_FLAT;
-					break;
-				}
-				if (evnt.key.keysym.scancode == SDL_SCANCODE_3) {
-					mode = MODE_DATA;
-					break;
-				}
-				if (evnt.key.keysym.scancode == SDL_SCANCODE_4) {
-					mode = MODE_FOEHN;
-					break;
-				}
+				break;
+			default:
+				break;
 		}
 	}
 }
