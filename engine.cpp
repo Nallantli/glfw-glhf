@@ -45,6 +45,7 @@ engine::engine()
     _resRatio = _screenWidth / _screenHeight;
     _cam = new camera(180, 90, 1);
     _windowState = windowState::RUN;
+	_fpsMax = 60;
 }
 
 engine::~engine(){}
@@ -78,6 +79,7 @@ void engine::init_engine()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
+	generate_world(_set);
 	engine_loop();
 }
 
@@ -231,29 +233,29 @@ void engine::user_input()
 
     if (keystate[SDL_SCANCODE_A])
     {
-        _cam->yaw = std::fmod(_cam->yaw + 0.1f + 360.0f, 360);
+        _cam->yaw = std::fmod(_cam->yaw + 0.0002f + 360.0f, 360);
     }
     if (keystate[SDL_SCANCODE_D])
     {
-        _cam->yaw = std::fmod(_cam->yaw - 0.1f + 360.0f, 360);
+        _cam->yaw = std::fmod(_cam->yaw - 0.0002f + 360.0f, 360);
     }
     if (keystate[SDL_SCANCODE_W])
     {
-        _cam->pit = _cam->pit + 0.1f;
+        _cam->pit = _cam->pit + 0.0002f;
     }
     if (keystate[SDL_SCANCODE_S])
     {
-        _cam->pit = _cam->pit - 0.1f;
+        _cam->pit = _cam->pit - 0.0002f;
     }
     if (keystate[SDL_SCANCODE_Q])
     {
-        _cam->rot(0, 0) += 0.005f;
-        _cam->rot(1, 1) += 0.005f;
+        _cam->rot(0, 0) += 0.00005f;
+        _cam->rot(1, 1) += 0.00005f;
     }
     if (keystate[SDL_SCANCODE_E])
     {
-        _cam->rot(0, 0) -= 0.005f;
-        _cam->rot(1, 1) -= 0.005f;
+        _cam->rot(0, 0) -= 0.00005f;
+        _cam->rot(1, 1) -= 0.00005f;
     }
 
     while(SDL_PollEvent(&evnt))
@@ -264,7 +266,7 @@ void engine::user_input()
                 _windowState = windowState::EXIT;
                 break;
             case SDL_MOUSEMOTION:
-                std::cout << "mouse x: " << evnt.motion.x << "mouse y: " << evnt.motion.y << std::endl;
+                std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
             case SDL_KEYDOWN:
                 if (evnt.key.keysym.scancode == SDL_SCANCODE_1)
                 {
@@ -292,15 +294,86 @@ void engine::user_input()
 
 void engine::engine_loop()
 {
-	generate_world(_set);
+	static int frameCount = 0;
+	static float accumulator = 0.0f;
 	
+	static float accumulatorTime = 1.0f;
 	while (_windowState != windowState::EXIT) {
+		float frameStart = SDL_GetTicks();
+
+		//render
 		render_world();
-		user_input();
+
+		//adjust simulation speed for framerate
+		accumulator += accumulatorTime;
+		while(accumulator >= 1.0f/10.0f)
+		{
+			user_input();
+			accumulator -= 1.0f/10.0f;
+		}
+
+		//regulate fps
+		if (frameCount==30)
+		{
+			std::cout << _fps << std::endl;
+			frameCount = 0;
+		}
+		frameCount++;
+		static float frameTime = SDL_GetTicks() - frameStart;
+		if(1000.0f / _fpsMax > frameTime){
+			SDL_Delay((1000.0f / _fpsMax) - frameTime);
+		}
+		accumulatorTime = SDL_GetTicks() - frameStart;
+		fps_counter();
 	}
 
     delete _cam;
 	for (auto &e : _set)
 		delete e;
 	_set.clear();
+}
+
+void engine::fps_counter()
+{
+	static const int SAMPLES_PER_FPS = 10;
+	static float frameTimes[SAMPLES_PER_FPS];
+	static float prevTicks = SDL_GetTicks();
+	static int currentFrame = 0;
+
+	float currentTicks;
+	currentTicks = SDL_GetTicks();
+
+	_frameTime = currentTicks - prevTicks;
+	prevTicks = currentTicks;
+	frameTimes[currentFrame % SAMPLES_PER_FPS] = _frameTime;
+
+	int count;
+
+	if (currentFrame < SAMPLES_PER_FPS)
+	{
+		count = currentFrame;
+	}
+	else
+	{
+		count = SAMPLES_PER_FPS;
+	}
+
+	float frameTimeAverage = 0;
+
+	for(int i = 0; i < count; i++)
+	{
+		frameTimeAverage += frameTimes[i];
+	}
+	frameTimeAverage /= count;
+
+	if(frameTimeAverage > 0)
+	{
+		_fps = 1000.0f / frameTimeAverage;
+	}
+	else
+	{
+		_fps = -1;
+	}
+
+	currentFrame++;
 }

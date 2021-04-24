@@ -46,6 +46,7 @@ private:
     void render_world();
     void user_input();
     void engine_loop();
+    void fps_counter();
 
     SDL_Window* _window;
     double _screenWidth;
@@ -55,4 +56,7 @@ private:
     std::vector<face_t *> _set;
     camera *_cam;
     windowState _windowState;
+    float _frameTime;
+    float _fps;
+    float _fpsMax;
 };
