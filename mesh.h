@@ -17,6 +17,7 @@ class s_point;
 struct face_t;
 struct c_point;
 
+
 struct c_point
 {
 	Eigen::Matrix<float, 3, 1> coords;

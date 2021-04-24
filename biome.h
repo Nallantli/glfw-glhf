@@ -12,6 +12,7 @@ static const float clamp( const float &n, const float &lower, const float &upper
 		x -= (upper - lower);
 	return x;
 }
+
 struct biome_t
 {
 	const float r, g, b;

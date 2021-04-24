@@ -153,7 +153,7 @@ void engine::fill_shape(const face_t *s)
 	glVertex2f(t3(0) / _resRatio, t3(1));
 	glEnd();
 }
-
+/*
 std::vector<std::string> engine::split(const std::string &s, char delimiter)
 {
 	std::vector<std::string> tokens;
@@ -164,7 +164,7 @@ std::vector<std::string> engine::split(const std::string &s, char delimiter)
 	}
 	return tokens;
 }
-
+*/
 
 void engine::render_world()
 {	
@@ -294,7 +294,7 @@ void engine::user_input()
 
 void engine::engine_loop()
 {
-	static int frameCount = 0;
+	//static int frameCount = 0;
 	static float accumulator = 0.0f;
 	
 	static float accumulatorTime = 1.0f;
