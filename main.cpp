@@ -466,7 +466,7 @@ void propagate_wind_east(face_t *f, float p_factor, const float start_y, std::ve
 		return;
 	for (auto &n : f->neighbors) {
 		if (
-			(n->get_center()[0] > f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) <= 10) || (n->get_center()[0] < f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) > 10)
+			((n->get_center()[0] > f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) <= 10) || (n->get_center()[0] < f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) > 10))
 			&& n->height <= f->height && n->type == face_t::FACE_LAND && std::find(explored.begin(), explored.end(), n) == explored.end()
 			) {
 			propagate_wind_east(
@@ -488,7 +488,7 @@ void propagate_wind_west(face_t *f, float p_factor, const float start_y, std::ve
 		return;
 	for (auto &n : f->neighbors) {
 		if (
-			(n->get_center()[0] < f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) <= 10) || (n->get_center()[0] > f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) > 10)
+			((n->get_center()[0] < f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) <= 10) || (n->get_center()[0] > f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) > 10))
 			&& n->height <= f->height && n->type == face_t::FACE_LAND && std::find(explored.begin(), explored.end(), n) == explored.end()
 			) {
 			propagate_wind_west(
