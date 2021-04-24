@@ -7,13 +7,9 @@
 #define ARIDITY_MULTIPLIER	4.0f
 #define INLAND_LAKE_SIZE	64
 #define ISLAND_BRANCHING_SIZE	10
-#define WINDOW_WIDTH	1600
-#define WINDOW_HEIGHT	900
 #define FACE_SIZE		3
 
 /* -------------------------- */
-
-#define RES_RATIO		((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT)
 
 #include<vector>
 #include "mesh.h"
