@@ -1,5 +1,4 @@
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 #include <eigen3/Eigen/Dense>
 #include <vector>
@@ -73,5 +72,3 @@ private:
 	c_point c_center;
 	void set_center();
 };
-
-#endif

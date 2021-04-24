@@ -1,4 +1,5 @@
 #pragma once
+
 #define GLFW_INCLUDE_NONE
 #define GL_GLEXT_PROTOTYPES 1
 #define GL3_PROTOTYPES 1

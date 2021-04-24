@@ -147,7 +147,7 @@ bool borders_ocean(const face_t *f)
 	return false;
 }
 
-bool sees_ocean(const float basin_height, face_t *curr, std::vector<face_t *> &explored)
+bool sees_ocean(const float &basin_height, face_t *curr, std::vector<face_t *> &explored)
 {
 	if (curr->type == face_t::FACE_OCEAN)
 		return true;
@@ -178,7 +178,7 @@ std::pair<face_t *, float> find_nearest_lake(face_t *f, const std::vector<face_t
 	return { min, d };
 }
 
-void stagnate_lake(const float basin_height, face_t *curr)
+void stagnate_lake(const float &basin_height, face_t *curr)
 {
 	curr->type = face_t::FACE_STAGNANT;
 	for (auto &n : curr->neighbors) {
@@ -245,7 +245,7 @@ bool iterate_rivers(const std::vector<face_t *> &faces)
 	return true;
 }
 
-void propagate_wind_east(face_t *f, float p_factor, const float start_y, std::vector<face_t *> &explored)
+void propagate_wind_east(face_t *f, float p_factor, const float &start_y, std::vector<face_t *> &explored)
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
@@ -267,7 +267,7 @@ void propagate_wind_east(face_t *f, float p_factor, const float start_y, std::ve
 	}
 }
 
-void propagate_wind_west(face_t *f, float p_factor, const float start_y, std::vector<face_t *> &explored)
+void propagate_wind_west(face_t *f, float p_factor, const float &start_y, std::vector<face_t *> &explored)
 {
 	explored.push_back(f);
 	f->foehn += p_factor;

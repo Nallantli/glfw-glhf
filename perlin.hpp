@@ -1,5 +1,4 @@
-#ifndef PERLIN_H
-#define PERLIN_H
+#pragma once
 
 #include <stdio.h>
 
@@ -58,7 +57,7 @@ static float perlin2d(float x, float y, float freq, int depth)
 	float div = 0.0;
 
 	int i;
-	for (i = 0; i < depth; i++)     {
+	for (i = 0; i < depth; i++) {
 		div += 256 * amp;
 		fin += noise2d(xa, ya) * amp;
 		amp /= 2;
@@ -68,5 +67,3 @@ static float perlin2d(float x, float y, float freq, int depth)
 
 	return fin / div;
 }
-
-#endif
