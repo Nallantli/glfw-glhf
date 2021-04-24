@@ -39,38 +39,39 @@ camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw
 
 engine::engine()
 {
-    _window = nullptr;
-    _screenWidth = 1600;
-    _screenHeight = 900;
-    _resRatio = _screenWidth / _screenHeight;
-    _cam = new camera(180, 90, 1);
-    _windowState = windowState::RUN;
+	_window = nullptr;
+	_screenWidth = 1920;
+	_screenHeight = 1080;
+	_resRatio = _screenWidth / _screenHeight;
+	_cam = new camera(180, 90, 1);
+	_windowState = windowState::RUN;
 	_fpsMax = 120;
 }
 
-engine::~engine(){}
+engine::~engine()
+{}
 
 void engine::run()
 {
 	srand(time(0));
-    init_engine();
+	init_engine();
 }
 
 void engine::init_engine()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL);	
-	if(_window == nullptr){
+	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL);
+	if (_window == nullptr) {
 		std::cerr << "SDL_window could not be created.";
 	}
-	
-	SDL_GLContext glContext = SDL_GL_CreateContext(_window);		
-	if(_window == nullptr){
-		std::cerr << "SDL_GL context could not be created.";
-	}	
 
-	GLenum error = glewInit();	
-	if(error != GLEW_OK){
+	SDL_GLContext glContext = SDL_GL_CreateContext(_window);
+	if (_window == nullptr) {
+		std::cerr << "SDL_GL context could not be created.";
+	}
+
+	GLenum error = glewInit();
+	if (error != GLEW_OK) {
 		std::cerr << "Glew init failed.";
 	}
 
@@ -78,7 +79,7 @@ void engine::init_engine()
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
 	generate_world(_set);
 	engine_loop();
 }
@@ -167,7 +168,7 @@ std::vector<std::string> engine::split(const std::string &s, char delimiter)
 */
 
 void engine::render_world()
-{	
+{
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glColor3f(0.0f, 0.0f, 0.5f);
@@ -228,89 +229,76 @@ void engine::render_world()
 
 void engine::user_input()
 {
-    SDL_Event evnt;
-    const Uint8 *keystate = SDL_GetKeyboardState(NULL);
+	SDL_Event evnt;
+	const Uint8 *keystate = SDL_GetKeyboardState(NULL);
 
-    if (keystate[SDL_SCANCODE_A])
-    {
-        _cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
-    }
-    if (keystate[SDL_SCANCODE_D])
-    {
-        _cam->yaw = std::fmod(_cam->yaw - 0.0015f + 360.0f, 360);
-    }
-    if (keystate[SDL_SCANCODE_W])
-    {
-        _cam->pit = _cam->pit + 0.0015f;
-    }
-    if (keystate[SDL_SCANCODE_S])
-    {
-        _cam->pit = _cam->pit - 0.0015f;
-    }
-    if (keystate[SDL_SCANCODE_Q])
-    {
-        _cam->rot(0, 0) += 0.00005f;
-        _cam->rot(1, 1) += 0.00005f;
-    }
-    if (keystate[SDL_SCANCODE_E])
-    {
-        _cam->rot(0, 0) -= 0.00005f;
-        _cam->rot(1, 1) -= 0.00005f;
-    }
+	if (keystate[SDL_SCANCODE_A]) {
+		_cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
+	}
+	if (keystate[SDL_SCANCODE_D]) {
+		_cam->yaw = std::fmod(_cam->yaw - 0.0015f + 360.0f, 360);
+	}
+	if (keystate[SDL_SCANCODE_W]) {
+		_cam->pit = _cam->pit + 0.0015f;
+	}
+	if (keystate[SDL_SCANCODE_S]) {
+		_cam->pit = _cam->pit - 0.0015f;
+	}
+	if (keystate[SDL_SCANCODE_Q]) {
+		_cam->rot(0, 0) += 0.00005f;
+		_cam->rot(1, 1) += 0.00005f;
+	}
+	if (keystate[SDL_SCANCODE_E]) {
+		_cam->rot(0, 0) -= 0.00005f;
+		_cam->rot(1, 1) -= 0.00005f;
+	}
 
-    while(SDL_PollEvent(&evnt))
-    {
-        switch (evnt.type)
-        {
-            case SDL_QUIT:
-                _windowState = windowState::EXIT;
-                break;
-            case SDL_MOUSEMOTION:
-                std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
-            case SDL_KEYDOWN:
-                if (evnt.key.keysym.scancode == SDL_SCANCODE_1)
-                {
-                    mode = MODE_WIRE;
-                    break;
-                }
-                if (evnt.key.keysym.scancode == SDL_SCANCODE_2)
-                {
-                    mode = MODE_FLAT;
-                    break;
-                }
-                if (evnt.key.keysym.scancode == SDL_SCANCODE_3)
-                {
-                    mode = MODE_DATA;
-                    break;
-                }
-                if (evnt.key.keysym.scancode == SDL_SCANCODE_4)
-                {
-                    mode = MODE_FOEHN;
-                    break;
-                }
-        }
-    }
+	while (SDL_PollEvent(&evnt)) {
+		switch (evnt.type) {
+			case SDL_QUIT:
+				_windowState = windowState::EXIT;
+				break;
+			case SDL_MOUSEMOTION:
+				std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
+			case SDL_KEYDOWN:
+				if (evnt.key.keysym.scancode == SDL_SCANCODE_1) {
+					mode = MODE_WIRE;
+					break;
+				}
+				if (evnt.key.keysym.scancode == SDL_SCANCODE_2) {
+					mode = MODE_FLAT;
+					break;
+				}
+				if (evnt.key.keysym.scancode == SDL_SCANCODE_3) {
+					mode = MODE_DATA;
+					break;
+				}
+				if (evnt.key.keysym.scancode == SDL_SCANCODE_4) {
+					mode = MODE_FOEHN;
+					break;
+				}
+		}
+	}
 }
 
 void engine::engine_loop()
 {
 	//static int frameCount = 0;
 	static float accumulator = 0.0f;
-	
+
 	static float accumulatorTime = 1.0f;
 	while (_windowState != windowState::EXIT) {
 		float frameStart = SDL_GetTicks();
 
 		//render
 		render_world();
-		
+
 		static float frameTime = SDL_GetTicks() - frameStart;
 		//adjust simulation speed for framerate
 		accumulator += accumulatorTime;
-		while(accumulator >= 1.0f/10.0f)
-		{
+		while (accumulator >= 1.0f / 10.0f) {
 			user_input();
-			accumulator -= 1.0f/10.0f;
+			accumulator -= 1.0f / 10.0f;
 		}
 
 		//regulate fps
@@ -322,14 +310,14 @@ void engine::engine_loop()
 		}
 		frameCount++;
 		*/
-		if(1000.0f / _fpsMax > frameTime){
+		if (1000.0f / _fpsMax > frameTime) {
 			SDL_Delay((1000.0f / _fpsMax) - frameTime);
 		}
 		accumulatorTime = SDL_GetTicks() - frameStart;
 		fps_counter();
 	}
 
-    delete _cam;
+	delete _cam;
 	for (auto &e : _set)
 		delete e;
 	_set.clear();
@@ -351,29 +339,22 @@ void engine::fps_counter()
 
 	int count;
 
-	if (currentFrame < SAMPLES_PER_FPS)
-	{
+	if (currentFrame < SAMPLES_PER_FPS) {
 		count = currentFrame;
-	}
-	else
-	{
+	} else {
 		count = SAMPLES_PER_FPS;
 	}
 
 	float frameTimeAverage = 0;
 
-	for(int i = 0; i < count; i++)
-	{
+	for (int i = 0; i < count; i++) {
 		frameTimeAverage += frameTimes[i];
 	}
 	frameTimeAverage /= count;
 
-	if(frameTimeAverage > 0)
-	{
+	if (frameTimeAverage > 0) {
 		_fps = 1000.0f / frameTimeAverage;
-	}
-	else
-	{
+	} else {
 		_fps = -1;
 	}
 

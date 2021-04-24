@@ -19,15 +19,18 @@
 #include "mesh.h"
 #include "gen.h"
 
-enum class windowState{RUN, EXIT};
+enum class windowState
+{
+    RUN, EXIT
+};
 
 struct camera
 {
-	float yaw;
-	float pit;
-	Eigen::Matrix<float, 2, 3> rot;
+    float yaw;
+    float pit;
+    Eigen::Matrix<float, 2, 3> rot;
 
-	camera(const float &yaw, const float &pit, const float &dist);
+    camera(const float &yaw, const float &pit, const float &dist);
 };
 
 class engine
@@ -48,7 +51,7 @@ private:
     void engine_loop();
     void fps_counter();
 
-    SDL_Window* _window;
+    SDL_Window *_window;
     double _screenWidth;
     double _screenHeight;
     float _resRatio;

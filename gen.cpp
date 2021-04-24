@@ -352,7 +352,7 @@ void generate_world(std::vector<face_t *> &set)
 		);
 	}
 
-	for (int i = 0; i < indexBuffer.size(); i += 3) {
+	for (unsigned int i = 0; i < indexBuffer.size(); i += 3) {
 		set.push_back(
 			new face_t{
 			translated_vertices[indexBuffer[i]],
