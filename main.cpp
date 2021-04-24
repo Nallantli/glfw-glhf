@@ -1,7 +1,16 @@
+/* -------- OPTIONS --------- */
+
 #define HEIGHT_MULTIPLIER	2.0f
 #define ARIDITY_MULTIPLIER	4.0f
 #define INLAND_LAKE_SIZE	64
 #define ISLAND_BRANCHING_SIZE	10
+#define WINDOW_WIDTH	2560
+#define WINDOW_HEIGHT	1440
+#define FACE_SIZE		3
+
+/* -------------------------- */
+
+#define RES_RATIO		((float)WINDOW_WIDTH / (float)WINDOW_HEIGHT)
 
 #define GLFW_INCLUDE_NONE
 #define GL_GLEXT_PROTOTYPES 1
@@ -112,10 +121,10 @@ void draw_secant_line(const s_point &a, const s_point &b, camera *cam)
 	for (float i = 0.0f; i < length; i++) {
 		s_point p(a[0] + delta_yaw * i, a[1] + delta_pit * i);
 		Eigen::Matrix<float, 2, 1> t = cam->rot * (rot_x(cam->pit) * (rot_y(cam->yaw) * c_point(p, 1).coords));
-		glVertex2f(t(0) / 2.0f, t(1));
+		glVertex2f(t(0) / RES_RATIO, t(1));
 	}
 	Eigen::Matrix<float, 2, 1> t = cam->rot * (rot_x(cam->pit) * (rot_y(cam->yaw) * c_point(b, 1).coords));
-	glVertex2f(t(0) / 2.0f, t(1));
+	glVertex2f(t(0) / RES_RATIO, t(1));
 	glEnd();
 }
 
@@ -150,10 +159,10 @@ void draw_shape(const face_t *s, camera *cam)
 		return;
 
 	glBegin(GL_LINE_STRIP);
-	glVertex2f(t1(0) / 2.0f, t1(1));
-	glVertex2f(t2(0) / 2.0f, t2(1));
-	glVertex2f(t3(0) / 2.0f, t3(1));
-	glVertex2f(t1(0) / 2.0f, t1(1));
+	glVertex2f(t1(0) / RES_RATIO, t1(1));
+	glVertex2f(t2(0) / RES_RATIO, t2(1));
+	glVertex2f(t3(0) / RES_RATIO, t3(1));
+	glVertex2f(t1(0) / RES_RATIO, t1(1));
 	glEnd();
 }
 
@@ -170,9 +179,9 @@ void fill_shape(const face_t *s, camera *cam)
 		return;
 
 	glBegin(GL_TRIANGLES);
-	glVertex2f(t1(0) / 2.0f, t1(1));
-	glVertex2f(t2(0) / 2.0f, t2(1));
-	glVertex2f(t3(0) / 2.0f, t3(1));
+	glVertex2f(t1(0) / RES_RATIO, t1(1));
+	glVertex2f(t2(0) / RES_RATIO, t2(1));
+	glVertex2f(t3(0) / RES_RATIO, t3(1));
 	glEnd();
 }
 
@@ -526,7 +535,7 @@ int main()
 	if (!glfwInit())
 		return 1;
 
-	GLFWwindow *window = glfwCreateWindow(2560, 1440, "My Title", NULL, NULL);
+	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My Title", NULL, NULL);
 	if (!window) {
 		return 1;
 	}
@@ -539,7 +548,7 @@ int main()
 
 	glfwSetKeyCallback(window, key_callback);
 
-	float size = 2.0f;
+	float size = (float)FACE_SIZE;
 
 	for (int i = size; i <= 180 - size; i += size) {
 		for (float j = size; j < 360;) {
@@ -712,7 +721,7 @@ int main()
 		glVertex2f(0, 0); // center of circle
 		for (int i = 0; i <= 90; i++) {
 			glVertex2f(
-				cam->rot(0, 0) * cos(i * 2.0f * M_PI / 90) / 2.0f, cam->rot(0, 0) * sin(i * 2.0f * M_PI / 90)
+				cam->rot(0, 0) * cos(i * 2.0f * M_PI / 90.0f) / RES_RATIO, cam->rot(0, 0) * sin(i * 2.0f * M_PI / 90.0f)
 			);
 		}
 		glEnd(); //END
