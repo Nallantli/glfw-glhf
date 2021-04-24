@@ -9,7 +9,7 @@ enum Mode
 	MODE_FOEHN
 };
 
-Mode mode = MODE_WIRE;
+Mode mode = MODE_FLAT;
 
 const Eigen::Matrix<float, 3, 3> rot_x(const float &theta)
 {
@@ -231,19 +231,19 @@ void engine::user_input()
 
     if (keystate[SDL_SCANCODE_A])
     {
-        _cam->yaw = std::fmod(_cam->yaw + 0.01f + 360.0f, 360);
+        _cam->yaw = std::fmod(_cam->yaw + 0.1f + 360.0f, 360);
     }
     if (keystate[SDL_SCANCODE_D])
     {
-        _cam->yaw = std::fmod(_cam->yaw - 0.01f + 360.0f, 360);
+        _cam->yaw = std::fmod(_cam->yaw - 0.1f + 360.0f, 360);
     }
     if (keystate[SDL_SCANCODE_W])
     {
-        _cam->pit = _cam->pit + 0.01f;
+        _cam->pit = _cam->pit + 0.1f;
     }
     if (keystate[SDL_SCANCODE_S])
     {
-        _cam->pit = _cam->pit - 0.01f;
+        _cam->pit = _cam->pit - 0.1f;
     }
     if (keystate[SDL_SCANCODE_Q])
     {
