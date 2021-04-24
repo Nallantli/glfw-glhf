@@ -50,7 +50,7 @@ private:
     SDL_Window* _window;
     double _screenWidth;
     double _screenHeight;
-    double _resRatio;
+    float _resRatio;
     std::map<int, bool> _KEYS;
     std::vector<face_t *> _set;
     camera *_cam;
