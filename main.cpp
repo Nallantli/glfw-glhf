@@ -4,8 +4,8 @@
 #define ARIDITY_MULTIPLIER	4.0f
 #define INLAND_LAKE_SIZE	64
 #define ISLAND_BRANCHING_SIZE	10
-#define WINDOW_WIDTH	2560
-#define WINDOW_HEIGHT	1440
+#define WINDOW_WIDTH	1600
+#define WINDOW_HEIGHT	900
 #define FACE_SIZE		3
 
 /* -------------------------- */
@@ -510,6 +510,7 @@ void propagate_wind_west(face_t *f, float p_factor, const float start_y, std::ve
 	}
 }
 
+
 void set_foehn(const std::vector<face_t *> &set)
 {
 	for (auto &f : set) {
@@ -527,27 +528,10 @@ void set_foehn(const std::vector<face_t *> &set)
 	}
 }
 
-int main()
+void generate_world()
 {
 	std::vector<s_point> ps;
-	srand(time(0));
-	glfwSetErrorCallback(error_callback);
-	if (!glfwInit())
-		return 1;
-
-	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My Title", NULL, NULL);
-	if (!window) {
-		return 1;
-	}
-
-	glfwMakeContextCurrent(window);
-
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	glViewport(0, 0, width, height);
-
-	glfwSetKeyCallback(window, key_callback);
-
+	
 	float size = (float)FACE_SIZE;
 
 	for (int i = size; i <= 180 - size; i += size) {
@@ -575,13 +559,12 @@ int main()
 	}
 
 	std::cout << "Setting triangles...\n";
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	auto hull = qh.getConvexHull(qhpoints, true, false);
 	const auto &indexBuffer = hull.getIndexBuffer();
 	const auto &vertexBuffer = hull.getVertexBuffer();
-
 	qhpoints.clear();
 	ps.clear();
-
 	std::vector<s_point> translated_vertices;
 
 	for (auto &v : vertexBuffer) {
@@ -600,8 +583,13 @@ int main()
 			}
 		);
 	}
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Setting neighbors...\n";
+	begin = std::chrono::steady_clock::now();
 	translated_vertices.clear();
 	for (auto &f : set) {
 		for (auto &f2 : set) {
@@ -615,6 +603,10 @@ int main()
 			}
 		}
 	}
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	/*std::ifstream file("cities500.txt");
 	if (!file.is_open())
@@ -633,6 +625,7 @@ int main()
 	std::cout << "Cites: " << c << "\n";*/
 
 	std::cout << "Setting Islands...\n";
+	begin = std::chrono::steady_clock::now();
 	for (auto i = 0; i < 16;i++) {
 		auto origin = set[rand() % set.size()];
 		float size = ((float)rand() / (float)RAND_MAX) * 0.5f;
@@ -641,8 +634,13 @@ int main()
 				iterate_land(e, ISLAND_BRANCHING_SIZE);
 		}
 	}
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Setting Height Map...\n";
+	begin = std::chrono::steady_clock::now();
 	for (auto &f : set) {
 		if (f->type != face_t::FACE_LAND)
 			continue;
@@ -655,8 +653,13 @@ int main()
 			perlin2d(perlin2d((cc[0] + 1.0f) / 4.0f, (cc[1] + 1.0f) / 4.0f, 16.0f, 4), (cc[2] + 1.0f) / 4.0f, 16.0f, 4);
 		f->height = (n.second + MAX(0, pm / 4.0f - 0.25f)) * HEIGHT_MULTIPLIER;
 	}
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Setting Water Types...\n";
+	begin = std::chrono::steady_clock::now();
 	for (auto &f : set) {
 		if (f->type != face_t::FACE_WATER)
 			continue;
@@ -672,9 +675,13 @@ int main()
 			}
 		}
 	}
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Setting Springs...\n";
-
+	begin = std::chrono::steady_clock::now();
 	for (auto &f : set) {
 		if (f->type != face_t::FACE_LAND || f->height > 0.4f && f->height < 0.5f) {
 			continue;
@@ -682,8 +689,13 @@ int main()
 		if (rand() % 64 == 0)
 			f->type = face_t::FACE_FLOWING;
 	}
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Setting Rivers...\n";
+	begin = std::chrono::steady_clock::now();
 	//iterate_rivers(set);
 	while (iterate_rivers(set));
 
@@ -691,8 +703,13 @@ int main()
 		if (f->type == face_t::FACE_STAGNANT)
 			f->type = face_t::FACE_INLAND_LAKE;
 	}
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Setting Aridity Map...\n";
+	begin = std::chrono::steady_clock::now();
 	for (auto &f : set) {
 		if (f->type != face_t::FACE_LAND)
 			continue;
@@ -700,14 +717,45 @@ int main()
 		c_point cc = f->get_center_c();
 		f->aridity = n.second * ARIDITY_MULTIPLIER;
 	}
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Setting Foehn Map...\n";
-
+	begin = std::chrono::steady_clock::now();
 	set_foehn(set);
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: " 
+			  << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() 
+			  << "[us]" << std::endl;
 
 	std::cout << "Done.\n";
 
 	curr = set.back();
+}
+
+int main()
+{
+	srand(time(0));
+	glfwSetErrorCallback(error_callback);
+	if (!glfwInit())
+		return 1;
+
+	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My Title", NULL, NULL);
+	if (!window) {
+		return 1;
+	}
+
+	glfwMakeContextCurrent(window);
+
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	glViewport(0, 0, width, height);
+
+	glfwSetKeyCallback(window, key_callback);
+
+	generate_world();
 
 	double time = glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
