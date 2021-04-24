@@ -531,7 +531,7 @@ void set_foehn(const std::vector<face_t *> &set)
 void generate_world()
 {
 	std::vector<s_point> ps;
-	
+
 	float size = (float)FACE_SIZE;
 
 	for (int i = size; i <= 180 - size; i += size) {
@@ -735,35 +735,10 @@ void generate_world()
 	curr = set.back();
 }
 
-int main()
+void render_world(GLFWwindow *window)
 {
-	srand(time(0));
-	glfwSetErrorCallback(error_callback);
-	if (!glfwInit())
-		return 1;
-
-	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My Title", NULL, NULL);
-	if (!window) {
-		return 1;
-	}
-
-	glfwMakeContextCurrent(window);
-
-	int width, height;
-	glfwGetFramebufferSize(window, &width, &height);
-	glViewport(0, 0, width, height);
-
-	glfwSetKeyCallback(window, key_callback);
-
-	generate_world();
-
-	double time = glfwGetTime();
-	while (!glfwWindowShouldClose(window)) {
-		double nt = glfwGetTime();
-		double lapse = nt - time;
-		time = nt;
 		glClear(GL_COLOR_BUFFER_BIT);
-
+		
 		glColor3f(0.0f, 0.0f, 0.5f);
 		glBegin(GL_TRIANGLE_FAN); //BEGIN CIRCLE
 		glVertex2f(0, 0); // center of circle
@@ -829,7 +804,16 @@ int main()
 			glColor3f(1.0f, 0.0f, 0.0f); // Red
 			draw_shape(curr, cam);
 		}
+		
+		glfwPollEvents();
+		glfwSwapBuffers(window);
+}
 
+void user_input(double time)
+{
+		double nt = glfwGetTime();
+		double lapse = nt - time;
+		time = nt;
 		if (KEYS[GLFW_KEY_A])
 			cam->yaw = std::fmod(cam->yaw + lapse * 10.0f + 360.0f, 360);
 		if (KEYS[GLFW_KEY_D])
@@ -866,9 +850,34 @@ int main()
 		if (KEYS[GLFW_KEY_4]) {
 			mode = MODE_FOEHN;
 		}
+}
 
-		glfwPollEvents();
-		glfwSwapBuffers(window);
+int main()
+{
+	srand(time(0));
+	glfwSetErrorCallback(error_callback);
+	if (!glfwInit())
+		return 1;
+
+	GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "My Title", NULL, NULL);
+	if (!window) {
+		return 1;
+	}
+
+	glfwMakeContextCurrent(window);
+
+	int width, height;
+	glfwGetFramebufferSize(window, &width, &height);
+	glViewport(0, 0, width, height);
+
+	glfwSetKeyCallback(window, key_callback);
+
+	generate_world();
+
+	double time = glfwGetTime();
+	while (!glfwWindowShouldClose(window)) {
+		render_world(window);
+		user_input(time);
 	}
 
 	glfwDestroyWindow(window);
