@@ -40,7 +40,7 @@ camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw
 engine::engine()
 {
     _window = nullptr;
-    _screenWidth = 1600;
+    _screenWidth = 900;
     _screenHeight = 900;
     _resRatio = _screenWidth / _screenHeight;
     _cam = new camera(180, 90, 1);
@@ -59,7 +59,7 @@ void engine::run()
 void engine::init_engine()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL);	
+	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | !SDL_WINDOW_FULLSCREEN);	
 	if(_window == nullptr){
 		std::cerr << "SDL_window could not be created.";
 	}
