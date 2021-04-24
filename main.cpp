@@ -706,22 +706,33 @@ int main()
 		double lapse = nt - time;
 		time = nt;
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glColor3f(0.0f, 0.0f, 0.5f);
+		glBegin(GL_TRIANGLE_FAN); //BEGIN CIRCLE
+		glVertex2f(0, 0); // center of circle
+		for (int i = 0; i <= 90; i++) {
+			glVertex2f(
+				cam->rot(0, 0) * cos(i * 2.0f * M_PI / 90) / 2.0f, cam->rot(0, 0) * sin(i * 2.0f * M_PI / 90)
+			);
+		}
+		glEnd(); //END
+
 		for (auto &s : set) {
 			switch (s->type) {
 				case face_t::FACE_OCEAN:
-					glColor3f(0.0f, 0.0f, 0.5f);
+					//glColor3f(0.0f, 0.0f, 0.5f);
+					//break;
+				case face_t::FACE_INLAND_LAKE:
+					//glColor3f(0.0, 0.0, 0.5f);
 					break;
 				case face_t::FACE_FLOWING:
-					glColor3f(1.0f, 0.0f, 1.0f);
-					break;
+					//glColor3f(1.0f, 0.0f, 1.0f);
+					//break;
 				case face_t::FACE_STAGNANT:
-					glColor3f(0.5f, 0.5f, 1.0f);
-					break;
-				case face_t::FACE_INLAND_LAKE:
-					glColor3f(0.0, 0.0, 0.5f);
+					//glColor3f(0.5f, 0.5f, 1.0f);
 					break;
 				case face_t::FACE_LAND: {
-					switch (mode) 					{
+					switch (mode) {
 						case MODE_FOEHN:
 							glColor3f(s->foehn, s->foehn, s->foehn);
 							break;
@@ -734,10 +745,10 @@ int main()
 							break;
 						}
 					}
+					fill_shape(s, cam);
 					break;
 				}
 			}
-			fill_shape(s, cam);
 			switch (mode) {
 				case MADE_WIRE: {
 					glColor3f(1.0f, 1.0f, 1.0f); // Red
@@ -748,18 +759,18 @@ int main()
 					break;
 				}
 			}
-			//auto f = find_closest(set, -cam->yaw + 90.0f, cam->pit);
-			if (curr != NULL) {
-				glColor3f(0.0f, 0.0f, 1.0f); // Red
-				draw_shape(curr->neighbors[0], cam);
-				glColor3f(0.0f, 1.0f, 1.0f); // Red
-				draw_shape(curr->neighbors[1], cam);
-				glColor3f(0.0f, 1.0f, 0.0f); // Red
-				draw_shape(curr->neighbors[2], cam);
+		}
+		//auto f = find_closest(set, -cam->yaw + 90.0f, cam->pit);
+		if (curr != NULL) {
+			glColor3f(0.0f, 0.0f, 1.0f); // Red
+			draw_shape(curr->neighbors[0], cam);
+			glColor3f(0.0f, 1.0f, 1.0f); // Red
+			draw_shape(curr->neighbors[1], cam);
+			glColor3f(0.0f, 1.0f, 0.0f); // Red
+			draw_shape(curr->neighbors[2], cam);
 
-				glColor3f(1.0f, 0.0f, 0.0f); // Red
-				draw_shape(curr, cam);
-			}
+			glColor3f(1.0f, 0.0f, 0.0f); // Red
+			draw_shape(curr, cam);
 		}
 
 		if (KEYS[GLFW_KEY_A])
