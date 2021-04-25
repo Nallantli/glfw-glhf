@@ -39,8 +39,8 @@ camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw
 engine::engine()
 {
 	_window = nullptr;
-	_screenWidth = 1920;
-	_screenHeight = 1080;
+	_screenWidth = 900;
+	_screenHeight = 900;
 	_resRatio = _screenWidth / _screenHeight;
 	_cam = new camera(180, 90, 1);
 	_windowState = windowState::RUN;
@@ -231,16 +231,16 @@ void engine::user_input()
 	SDL_Event evnt;
 	const Uint8 *keystate = SDL_GetKeyboardState(NULL);
 
-	if (keystate[SDL_SCANCODE_A]) {
+	if (keystate[SDL_SCANCODE_A] || keystate[SDL_SCANCODE_LEFT]) {
 		_cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
 	}
-	if (keystate[SDL_SCANCODE_D]) {
+	if (keystate[SDL_SCANCODE_D] || keystate[SDL_SCANCODE_RIGHT]) {
 		_cam->yaw = std::fmod(_cam->yaw - 0.0015f + 360.0f, 360);
 	}
-	if (keystate[SDL_SCANCODE_W]) {
+	if (keystate[SDL_SCANCODE_W] || keystate[SDL_SCANCODE_UP]) {
 		_cam->pit = _cam->pit + 0.0015f;
 	}
-	if (keystate[SDL_SCANCODE_S]) {
+	if (keystate[SDL_SCANCODE_S] || keystate[SDL_SCANCODE_DOWN]) {
 		_cam->pit = _cam->pit - 0.0015f;
 	}
 	if (keystate[SDL_SCANCODE_Q]) {
@@ -258,8 +258,12 @@ void engine::user_input()
 				_windowState = windowState::EXIT;
 				break;
 			case SDL_MOUSEMOTION:
-				std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
+				//std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
 				break;
+			case SDL_MOUSEBUTTONDOWN:
+				if(evnt.button.button == SDL_BUTTON_LEFT){
+					std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
+				}
 			case SDL_KEYDOWN:
 				switch (evnt.key.keysym.scancode) {
 					case SDL_SCANCODE_1:
