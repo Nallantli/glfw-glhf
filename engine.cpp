@@ -1,4 +1,9 @@
 #include "engine.h"
+#ifdef _WIN32
+#include <Windows.h>
+#include <ShellScalingAPI.h>
+#include <comdef.h>
+#endif
 
 enum Mode
 {
@@ -38,6 +43,13 @@ camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw
 
 engine::engine()
 {
+#ifdef _WIN32
+	HRESULT hr = SetProcessDPIAware();
+	if (FAILED(hr)) {
+		_com_error err(hr);
+		fwprintf(stderr, L"SetProcessDPIAware: %s\n", err.ErrorMessage());
+	}
+#endif
 	_window = nullptr;
 	_screenWidth = 1920;
 	_screenHeight = 1080;
@@ -59,12 +71,12 @@ void engine::run()
 void engine::init_engine()
 {
 	SDL_Init(SDL_INIT_EVERYTHING);
-	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL);
+	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (_window == nullptr) {
 		std::cerr << "SDL_window could not be created.";
 	}
 
-	SDL_GLContext glContext = SDL_GL_CreateContext(_window);
+	glContext = SDL_GL_CreateContext(_window);
 	if (_window == nullptr) {
 		std::cerr << "SDL_GL context could not be created.";
 	}
@@ -181,46 +193,35 @@ void engine::render_world()
 	glEnd(); //END
 
 	for (auto &s : _set) {
-		switch (s->type) {
-			case face_t::FACE_OCEAN:
-				//glColor3f(0.0f, 0.0f, 0.5f);
-				//break;
-			case face_t::FACE_INLAND_LAKE:
-				//glColor3f(0.0, 0.0, 0.5f);
-				break;
-			case face_t::FACE_FLOWING:
-				//glColor3f(1.0f, 0.0f, 1.0f);
-				//break;
-			case face_t::FACE_STAGNANT:
-				//glColor3f(0.5f, 0.5f, 1.0f);
-				break;
-			case face_t::FACE_LAND: {
-				switch (mode) {
-					case MODE_FOEHN:
-						glColor3f(s->foehn, s->foehn, s->foehn);
-						break;
-					case MODE_DATA:
-						glColor3f(s->aridity, s->height, 0.0f);
-						break;
-					case MODE_FLAT: {
-						auto biome = s->get_biome();
-						glColor3f(biome.r, biome.g, biome.b);
-						break;
-					}
-				}
-				fill_shape(s);
-				break;
-			}
-		}
 		switch (mode) {
-			case MODE_WIRE: {
-				glColor3f(1.0f, 1.0f, 1.0f); // Red
+			case MODE_WIRE:
+				if (s->type == face_t::FACE_LAND) {
+					auto biome = s->get_biome();
+					glColor3f(biome.r, biome.g, biome.b);
+					fill_shape(s);
+				}
+				glColor3f(1.0f, 1.0f, 1.0f);
 				draw_shape(s);
 				break;
-			}
-			case MODE_FLAT: {
+			case MODE_FOEHN:
+				if (s->type == face_t::FACE_LAND) {
+					glColor3f(s->foehn, s->foehn, s->foehn);
+					fill_shape(s);
+				}
 				break;
-			}
+			case MODE_DATA:
+				if (s->type == face_t::FACE_LAND) {
+					glColor3f(s->aridity, s->height, 0.0f);
+					fill_shape(s);
+				}
+				break;
+			case MODE_FLAT:
+				if (s->type == face_t::FACE_LAND) {
+					auto biome = s->get_biome();
+					glColor3f(biome.r, biome.g, biome.b);
+					fill_shape(s);
+				}
+				break;
 		}
 	}
 	SDL_GL_SwapWindow(_window);
@@ -232,10 +233,10 @@ void engine::user_input()
 	const Uint8 *keystate = SDL_GetKeyboardState(NULL);
 
 	if (keystate[SDL_SCANCODE_A]) {
-		_cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
+		_cam->yaw = std::fmod(_cam->yaw - 0.0015f + 360.0f, 360);
 	}
 	if (keystate[SDL_SCANCODE_D]) {
-		_cam->yaw = std::fmod(_cam->yaw - 0.0015f + 360.0f, 360);
+		_cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
 	}
 	if (keystate[SDL_SCANCODE_W]) {
 		_cam->pit = _cam->pit + 0.0015f;
@@ -323,6 +324,9 @@ void engine::engine_loop()
 		fps_counter();
 	}
 
+	SDL_GL_DeleteContext(glContext);
+	SDL_DestroyWindow(_window);
+	SDL_Quit();
 	delete _cam;
 	for (auto &e : _set)
 		delete e;

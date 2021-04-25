@@ -53,6 +53,7 @@ private:
     void fps_counter();
 
     SDL_Window *_window;
+    SDL_GLContext glContext;
     double _screenWidth;
     double _screenHeight;
     float _resRatio;
