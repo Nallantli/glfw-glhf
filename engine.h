@@ -68,4 +68,5 @@ private:
 
     int mouse_x;
     int mouse_y;
+    time_t _seed;
 };
