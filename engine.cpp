@@ -80,12 +80,13 @@ engine::~engine()
 
 void engine::run()
 {
-	srand(time(0));
 	init_engine();
 }
 
 void engine::init_engine()
 {
+	_seed = time(0);
+	srand(_seed);
 	SDL_Init(SDL_INIT_EVERYTHING);
 	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (_window == nullptr) {
@@ -108,6 +109,7 @@ void engine::init_engine()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	generate_world(_set);
+	std::cout << "World generated with seed: " << _seed << std::endl;
 	engine_loop();
 }
 
