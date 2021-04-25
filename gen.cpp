@@ -11,10 +11,8 @@ const float scale(const float &pit)
 
 const float true_dist(const face_t *a, const face_t *b)
 {
-	s_point ca{ a->get_center() };
-	s_point cb{ b->get_center() };
-	c_point cca(ca, 1);
-	c_point ccb(cb, 1);
+	c_point cca = a->get_center_c();
+	c_point ccb = b->get_center_c();
 	auto x = cca.coords.dot(ccb.coords);
 	return std::acos(x);
 }
@@ -293,7 +291,7 @@ void set_foehn(const std::vector<face_t *> &set)
 {
 	for (auto &f : set) {
 		if (f->type == face_t::FACE_LAND) {
-			float w_factor = clamp(std::pow(DSIN(3.0f * (f->get_center()[1] - 90.0f)), 2) / DCOS(3.0f * (f->get_center()[1] - 90.0f)), -1, 1) / 2.0f;
+			float w_factor = CLAMP(std::pow(DSIN(3.0f * (f->get_center()[1] - 90.0f)), 2) / DCOS(3.0f * (f->get_center()[1] - 90.0f)), -1, 1) / 2.0f;
 			float h_factor = f->height;
 			float p_factor = w_factor * h_factor;
 			std::vector<face_t *> explored;

@@ -11,6 +11,7 @@
 #define DCOS(x) ((float)std::cos(M_PI * x / 180.0f))
 #define DSIN(x) ((float)std::sin(M_PI * x / 180.0f))
 #define RAD(x) ((float)(M_PI / 180.0f) * x)
+#define CLAMP(n, lower, upper) (n > upper ? upper : (n < lower ? lower : n))
 
 class s_point;
 struct face_t;

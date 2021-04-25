@@ -84,7 +84,7 @@ void face_t::set_center()
 
 const biome_t face_t::get_biome() const
 {
-	int _height = clamp(height * 6.0f, 0.0f, 5.0f);
-	int _aridity = clamp(aridity * 5.0f + foehn * 0.25, 0.0f, 6.0f);
+	int _height = CLAMP(height * 6.0f, 0.0f, 5.0f);
+	int _aridity = CLAMP(aridity * 5.0f + foehn * 0.25, 0.0f, 6.0f);
 	return biome_map[_height][6 - _aridity];
 }

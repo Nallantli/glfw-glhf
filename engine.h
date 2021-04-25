@@ -61,7 +61,11 @@ private:
     std::vector<face_t *> _set;
     camera *_cam;
     windowState _windowState;
+    face_t *_selected;
     float _frameTime;
     float _fps;
     float _fpsMax;
+
+    int mouse_x;
+    int mouse_y;
 };

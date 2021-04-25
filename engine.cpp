@@ -35,6 +35,22 @@ const Eigen::Matrix<float, 3, 3> rot_y(const float &theta)
 	return m;
 }
 
+face_t *get_face_from_point(const s_point &p, std::vector<face_t *> &set)
+{
+	face_t *curr = NULL;
+	float dist = 100.0f;
+	for (auto &s : set) {
+		c_point cc(p, 1.0f);
+		auto x = cc.coords.dot(s->get_center_c().coords);
+		float d = std::acos(x);
+		if (curr == NULL || d < dist) {
+			curr = s;
+			dist = d;
+		}
+	}
+	return curr;
+}
+
 camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw }, pit{ pit }
 {
 	rot(0, 0) = dist;
@@ -51,8 +67,8 @@ engine::engine()
 	}
 #endif
 	_window = nullptr;
-	_screenWidth = 900;
-	_screenHeight = 900;
+	_screenWidth = 2560;
+	_screenHeight = 1440;
 	_resRatio = _screenWidth / _screenHeight;
 	_cam = new camera(180, 90, 1);
 	_windowState = windowState::RUN;
@@ -224,6 +240,25 @@ void engine::render_world()
 				break;
 		}
 	}
+
+	float m_x = (((float)mouse_x / (float)_screenWidth) * 2.0f - 1.0f) * _resRatio / _cam->rot(0, 0);
+	float m_y = (((float)mouse_y / (float)_screenHeight) * -2.0f + 1.0f) / _cam->rot(0, 0);
+
+	c_point test(-m_x, -m_y, -std::sqrt(1.0f - std::sqrt(m_x * m_x + m_y * m_y)));
+	test.coords = rot_y(_cam->yaw).inverse() * (rot_x(_cam->pit).inverse() * test.coords);
+
+	float r = std::sqrt(test[0] * test[0] + test[1] * test[1] + test[2] * test[2]);
+	s_point mp(
+		180.0f * std::atan2(test[1], test[0]) / M_PI + 180.0f,
+		180.0f * std::asin(test[2] / r) / M_PI + 90.0f
+	);
+
+	_selected = get_face_from_point(mp, _set);
+	if (_selected != NULL) {
+		glColor3f(1.0f, 0.0f, 0.0f);
+		draw_shape(_selected);
+	}
+
 	SDL_GL_SwapWindow(_window);
 }
 
@@ -259,11 +294,17 @@ void engine::user_input()
 				_windowState = windowState::EXIT;
 				break;
 			case SDL_MOUSEMOTION:
+				mouse_x = evnt.motion.x;
+				mouse_y = evnt.motion.y;
 				//std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
 				break;
 			case SDL_MOUSEBUTTONDOWN:
-				if(evnt.button.button == SDL_BUTTON_LEFT){
-					std::cout << "mouse x: " << evnt.motion.x << " mouse y: " << evnt.motion.y << std::endl;
+				if (evnt.button.button == SDL_BUTTON_LEFT && _selected != NULL) {
+					std::cout << _selected->get_biome().name << "\n";
+					std::cout << "HEIGHT: " << _selected->height << "\nARIDITY: " << _selected->aridity << "\nFOEHN: " << _selected->foehn << "\n";
+					std::cout << "A: (" << _selected->a[0] << ", " << _selected->a[1] << ")\n";
+					std::cout << "B: (" << _selected->b[0] << ", " << _selected->b[1] << ")\n";
+					std::cout << "C: (" << _selected->c[0] << ", " << _selected->c[1] << ")\n";
 				}
 			case SDL_KEYDOWN:
 				switch (evnt.key.keysym.scancode) {

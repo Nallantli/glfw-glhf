@@ -2,16 +2,6 @@
 
 #include<string>
 
-static const float clamp(const float &n, const float &lower, const float &upper)
-{
-	float x = n;
-	while (x < lower)
-		x += (upper - lower);
-	while (x >= upper)
-		x -= (upper - lower);
-	return x;
-}
-
 struct biome_t
 {
 	const float r, g, b;
