@@ -506,8 +506,6 @@ void generate_world(std::vector<face_t *> &set)
 	std::cout << "Elapsed: "
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
 		<< "[us]" << std::endl;
-
-	std::cout << "Done.\n";
 }
 
 face_t *find_closest(const std::vector<face_t *> &faces, const float &yaw, const float &pit)

@@ -64,4 +64,5 @@ private:
     float _frameTime;
     float _fps;
     float _fpsMax;
+    time_t _seed;
 };
