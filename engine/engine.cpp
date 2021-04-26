@@ -35,12 +35,12 @@ const Eigen::Matrix<float, 3, 3> rot_y(const float &theta)
 	return m;
 }
 
-face_t *get_face_from_point(const s_point &p, std::vector<face_t *> &set)
+surface_t *get_face_from_point(const polar_t &p, std::vector<surface_t *> &set)
 {
-	face_t *curr = NULL;
+	surface_t *curr = NULL;
 	float dist = 100.0f;
 	for (auto &s : set) {
-		c_point cc(p, 1.0f);
+		point3_t cc(p, 1.0f);
 		auto x = cc.coords.dot(s->get_center_c().coords);
 		float d = std::acos(x);
 		if (curr == NULL || d < dist) {
@@ -113,7 +113,7 @@ void engine::init_engine()
 	engine_loop();
 }
 
-void engine::draw_secant_line(const s_point &a, const s_point &b)
+void engine::draw_secant_line(const polar_t &a, const polar_t &b)
 {
 	/*float z_a = flatten(a, _cam, r_a);
 		float z_b = flatten(b, _cam, r_b);
@@ -136,22 +136,22 @@ void engine::draw_secant_line(const s_point &a, const s_point &b)
 
 	glBegin(GL_LINE_STRIP);
 	for (float i = 0.0f; i < length; i++) {
-		s_point p(a[0] + delta_yaw * i, a[1] + delta_pit * i);
-		Eigen::Matrix<float, 2, 1> t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(p, 1).coords));
+		polar_t p(a[0] + delta_yaw * i, a[1] + delta_pit * i);
+		Eigen::Matrix<float, 2, 1> t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(p, 1).coords));
 		glVertex2f(t(0) / _resRatio, t(1));
 	}
-	Eigen::Matrix<float, 2, 1> t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(b, 1).coords));
+	Eigen::Matrix<float, 2, 1> t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(b, 1).coords));
 	glVertex2f(t(0) / _resRatio, t(1));
 	glEnd();
 }
 
-void engine::draw_shape(const face_t *s)
+void engine::draw_shape(const surface_t *s)
 {
-	Eigen::Matrix<float, 3, 1> r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(s->a, 1).coords);
+	Eigen::Matrix<float, 3, 1> r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
 	Eigen::Matrix<float, 2, 1> t1 = _cam->rot * r1;
-	Eigen::Matrix<float, 3, 1> r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(s->b, 1).coords);
+	Eigen::Matrix<float, 3, 1> r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
 	Eigen::Matrix<float, 2, 1> t2 = _cam->rot * r2;
-	Eigen::Matrix<float, 3, 1> r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(s->c, 1).coords);
+	Eigen::Matrix<float, 3, 1> r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
 	Eigen::Matrix<float, 2, 1> t3 = _cam->rot * r3;
 
 	if (r1(2) < 0 || r2(2) < 0 || r3(2) < 0)
@@ -165,13 +165,13 @@ void engine::draw_shape(const face_t *s)
 	glEnd();
 }
 
-void engine::fill_shape(const face_t *s)
+void engine::fill_shape(const surface_t *s)
 {
-	Eigen::Matrix<float, 3, 1> r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(s->a, 1).coords);
+	Eigen::Matrix<float, 3, 1> r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
 	Eigen::Matrix<float, 2, 1> t1 = _cam->rot * r1;
-	Eigen::Matrix<float, 3, 1> r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(s->b, 1).coords);
+	Eigen::Matrix<float, 3, 1> r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
 	Eigen::Matrix<float, 2, 1> t2 = _cam->rot * r2;
-	Eigen::Matrix<float, 3, 1> r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * c_point(s->c, 1).coords);
+	Eigen::Matrix<float, 3, 1> r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
 	Eigen::Matrix<float, 2, 1> t3 = _cam->rot * r3;
 
 	if (r1(2) < 0 || r2(2) < 0 || r3(2) < 0)
@@ -213,7 +213,7 @@ void engine::render_world()
 	for (auto &s : _set) {
 		switch (mode) {
 			case MODE_WIRE:
-				if (s->type == face_t::FACE_LAND) {
+				if (s->type == surface_t::FACE_LAND) {
 					auto biome = s->get_biome();
 					glColor3f(biome.r, biome.g, biome.b);
 					fill_shape(s);
@@ -222,19 +222,19 @@ void engine::render_world()
 				draw_shape(s);
 				break;
 			case MODE_FOEHN:
-				if (s->type == face_t::FACE_LAND) {
+				if (s->type == surface_t::FACE_LAND) {
 					glColor3f(s->foehn, s->foehn, s->foehn);
 					fill_shape(s);
 				}
 				break;
 			case MODE_DATA:
-				if (s->type == face_t::FACE_LAND) {
+				if (s->type == surface_t::FACE_LAND) {
 					glColor3f(s->aridity, s->height, 0.0f);
 					fill_shape(s);
 				}
 				break;
 			case MODE_FLAT:
-				if (s->type == face_t::FACE_LAND) {
+				if (s->type == surface_t::FACE_LAND) {
 					auto biome = s->get_biome();
 					glColor3f(biome.r, biome.g, biome.b);
 					fill_shape(s);
@@ -246,11 +246,11 @@ void engine::render_world()
 	float m_x = (((float)mouse_x / (float)_screenWidth) * 2.0f - 1.0f) * _resRatio / _cam->rot(0, 0);
 	float m_y = (((float)mouse_y / (float)_screenHeight) * -2.0f + 1.0f) / _cam->rot(0, 0);
 
-	c_point test(-m_x, -m_y, -std::sqrt(1.0f - std::sqrt(m_x * m_x + m_y * m_y)));
+	point3_t test(-m_x, -m_y, -std::sqrt(1.0f - std::sqrt(m_x * m_x + m_y * m_y)));
 	test.coords = rot_y(_cam->yaw).inverse() * (rot_x(_cam->pit).inverse() * test.coords);
 
 	float r = std::sqrt(test[0] * test[0] + test[1] * test[1] + test[2] * test[2]);
-	s_point mp(
+	polar_t mp(
 		180.0f * std::atan2(test[1], test[0]) / M_PI + 180.0f,
 		180.0f * std::asin(test[2] / r) / M_PI + 90.0f
 	);

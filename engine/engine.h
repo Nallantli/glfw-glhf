@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_NONE
 #define GL_GLEXT_PROTOTYPES 1
 #define GL3_PROTOTYPES 1
+
 #include <windows.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -17,8 +18,7 @@
 #include <fstream>
 #include <map>
 
-#include "mesh.h"
-#include "gen.h"
+#include "../generator/generator.h"
 
 enum class windowState
 {
@@ -43,9 +43,9 @@ public:
 
 private:
     void init_engine();
-    void draw_secant_line(const s_point &a, const s_point &b);
-    void draw_shape(const face_t *s);
-    void fill_shape(const face_t *s);
+    void draw_secant_line(const polar_t &a, const polar_t &b);
+    void draw_shape(const surface_t *s);
+    void fill_shape(const surface_t *s);
     std::vector<std::string> split(const std::string &s, char delimiter);
     void render_world();
     void user_input();
@@ -58,10 +58,10 @@ private:
     double _screenHeight;
     float _resRatio;
     std::map<int, bool> _KEYS;
-    std::vector<face_t *> _set;
+    std::vector<surface_t *> _set;
     camera *_cam;
     windowState _windowState;
-    face_t *_selected;
+    surface_t *_selected;
     float _frameTime;
     float _fps;
     float _fpsMax;
