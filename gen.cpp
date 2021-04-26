@@ -247,7 +247,7 @@ void propagate_wind_east(face_t *f, float p_factor, const float &start_y, std::v
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
-	p_factor -= 0.5;
+	p_factor -= 0.1;
 	if (p_factor < 0)
 		return;
 	for (auto &n : f->neighbors) {
@@ -269,7 +269,7 @@ void propagate_wind_west(face_t *f, float p_factor, const float &start_y, std::v
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
-	p_factor -= 0.5;
+	p_factor -= 0.1;
 	if (p_factor < 0)
 		return;
 	for (auto &n : f->neighbors) {
@@ -298,7 +298,7 @@ void set_foehn(const std::vector<face_t *> &set)
 			if (p_factor > 0) {
 				propagate_wind_east(f, p_factor, f->get_center()[1], explored);
 			} else {
-				propagate_wind_east(f, -p_factor, f->get_center()[1], explored);
+				propagate_wind_west(f, -p_factor, f->get_center()[1], explored);
 			}
 		}
 	}

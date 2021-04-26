@@ -270,16 +270,16 @@ void engine::user_input()
 	const Uint8 *keystate = SDL_GetKeyboardState(NULL);
 
 	if (keystate[SDL_SCANCODE_A] || keystate[SDL_SCANCODE_LEFT]) {
-		_cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
-	}
-	if (keystate[SDL_SCANCODE_D] || keystate[SDL_SCANCODE_RIGHT]) {
 		_cam->yaw = std::fmod(_cam->yaw - 0.0015f + 360.0f, 360);
 	}
+	if (keystate[SDL_SCANCODE_D] || keystate[SDL_SCANCODE_RIGHT]) {
+		_cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
+	}
 	if (keystate[SDL_SCANCODE_W] || keystate[SDL_SCANCODE_UP]) {
-		_cam->pit = _cam->pit + 0.0015f;
+		_cam->pit = CLAMP(_cam->pit + 0.0015f, 0, 180);
 	}
 	if (keystate[SDL_SCANCODE_S] || keystate[SDL_SCANCODE_DOWN]) {
-		_cam->pit = _cam->pit - 0.0015f;
+		_cam->pit = CLAMP(_cam->pit - 0.0015f, 0, 180);
 	}
 	if (keystate[SDL_SCANCODE_Q]) {
 		_cam->rot(0, 0) += 0.00005f;
