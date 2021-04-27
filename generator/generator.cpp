@@ -1,6 +1,7 @@
 #include "generator.h"
 
-#include <eigen3/Eigen/Dense>
+#include <glm/glm.hpp>
+#include <algorithm>
 #include <chrono>
 
 #include "../quickhull/QuickHull.hpp"
@@ -15,7 +16,7 @@ const float true_dist(const surface_t *a, const surface_t *b)
 {
 	point3_t cca = a->get_center_c();
 	point3_t ccb = b->get_center_c();
-	auto x = cca.coords.dot(ccb.coords);
+	auto x = glm::dot(cca.coords, ccb.coords);
 	return std::acos(x);
 }
 
@@ -306,8 +307,9 @@ void set_foehn(const std::vector<surface_t *> &set)
 	}
 }
 
-void generate_world(std::vector<surface_t *> &set)
+void generate_world(std::vector<surface_t *> &set, const int &SEED)
 {
+	perlin p(SEED);
 	std::vector<polar_t> ps;
 
 	float size = (float)FACE_SIZE;
@@ -425,10 +427,10 @@ void generate_world(std::vector<surface_t *> &set)
 		std::pair<surface_t *, float> n = find_nearest_ocean(f, set);
 		point3_t cc = f->get_center_c();
 		float pm =
-			perlin2d(perlin2d((cc[0] + 1.0f) / 32.0f, (cc[1] + 1.0f) / 32.0f, 2.0f, 4), (cc[2] + 1.0f) / 32.0f, 2.0f, 4) +
-			perlin2d(perlin2d((cc[0] + 1.0f) / 16.0f, (cc[1] + 1.0f) / 16.0f, 4.0f, 4), (cc[2] + 1.0f) / 16.0f, 4.0f, 4) +
-			perlin2d(perlin2d((cc[0] + 1.0f) / 8.0f, (cc[1] + 1.0f) / 8.0f, 8.0f, 4), (cc[2] + 1.0f) / 8.0f, 8.0f, 4) +
-			perlin2d(perlin2d((cc[0] + 1.0f) / 4.0f, (cc[1] + 1.0f) / 4.0f, 16.0f, 4), (cc[2] + 1.0f) / 4.0f, 16.0f, 4);
+			p.get(p.get((cc[0] + 1.0f) / 32.0f, (cc[1] + 1.0f) / 32.0f, 2.0f, 4), (cc[2] + 1.0f) / 32.0f, 2.0f, 4) +
+			p.get(p.get((cc[0] + 1.0f) / 16.0f, (cc[1] + 1.0f) / 16.0f, 4.0f, 4), (cc[2] + 1.0f) / 16.0f, 4.0f, 4) +
+			p.get(p.get((cc[0] + 1.0f) / 8.0f, (cc[1] + 1.0f) / 8.0f, 8.0f, 4), (cc[2] + 1.0f) / 8.0f, 8.0f, 4) +
+			p.get(p.get((cc[0] + 1.0f) / 4.0f, (cc[1] + 1.0f) / 4.0f, 16.0f, 4), (cc[2] + 1.0f) / 4.0f, 16.0f, 4);
 		f->height = (n.second + MAX(0, pm / 4.0f - 0.25f)) * HEIGHT_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();

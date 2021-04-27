@@ -2,6 +2,7 @@
 #ifdef _WIN32
 #include <Windows.h>
 #include <ShellScalingAPI.h>
+#include <glm/mat3x3.hpp>
 #include <comdef.h>
 #endif
 
@@ -15,23 +16,23 @@ enum Mode
 
 Mode mode = MODE_FLAT;
 
-const Eigen::Matrix<float, 3, 3> rot_x(const float &theta)
+const glm::mat3 rot_x(const float &theta)
 {
-	Eigen::Matrix<float, 3, 3> m;
-	m <<
+	glm::mat3 m{
 		1, 0, 0,
 		0, DCOS(theta), -DSIN(theta),
-		0, DSIN(theta), DCOS(theta);
+		0, DSIN(theta), DCOS(theta)
+	};
 	return m;
 }
 
-const Eigen::Matrix<float, 3, 3> rot_y(const float &theta)
+const glm::mat3 rot_y(const float &theta)
 {
-	Eigen::Matrix<float, 3, 3> m;
-	m <<
+	glm::mat3 m{
 		DCOS(theta), -DSIN(theta), 0,
 		DSIN(theta), DCOS(theta), 0,
-		0, 0, 1;
+		0, 0, 1
+	};
 	return m;
 }
 
@@ -41,7 +42,7 @@ surface_t *get_face_from_point(const polar_t &p, std::vector<surface_t *> &set)
 	float dist = 100.0f;
 	for (auto &s : set) {
 		point3_t cc(p, 1.0f);
-		auto x = cc.coords.dot(s->get_center_c().coords);
+		auto x = glm::dot(cc.coords, s->get_center_c().coords);
 		float d = std::acos(x);
 		if (curr == NULL || d < dist) {
 			curr = s;
@@ -53,11 +54,12 @@ surface_t *get_face_from_point(const polar_t &p, std::vector<surface_t *> &set)
 
 camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw }, pit{ pit }
 {
-	rot(0, 0) = dist;
-	rot(1, 1) = dist;
+	rot[0][0] = dist;
+	rot[1][1] = dist;
 }
 
-engine::engine()
+engine::engine(const long long &seed)
+	: _seed(seed)
 {
 #ifdef _WIN32
 	HRESULT hr = SetProcessDPIAware();
@@ -85,7 +87,6 @@ void engine::run()
 
 void engine::init_engine()
 {
-	_seed = time(0);
 	srand(_seed);
 	SDL_Init(SDL_INIT_EVERYTHING);
 	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
@@ -108,7 +109,7 @@ void engine::init_engine()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	generate_world(_set);
+	generate_world(_set, _seed);
 	std::cout << "World generated with seed: " << _seed << std::endl;
 	engine_loop();
 }
@@ -137,64 +138,52 @@ void engine::draw_secant_line(const polar_t &a, const polar_t &b)
 	glBegin(GL_LINE_STRIP);
 	for (float i = 0.0f; i < length; i++) {
 		polar_t p(a[0] + delta_yaw * i, a[1] + delta_pit * i);
-		Eigen::Matrix<float, 2, 1> t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(p, 1).coords));
-		glVertex2f(t(0) / _resRatio, t(1));
+		glm::vec2 t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(p, 1).coords));
+		glVertex2f(t[0] / _resRatio, t[1]);
 	}
-	Eigen::Matrix<float, 2, 1> t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(b, 1).coords));
-	glVertex2f(t(0) / _resRatio, t(1));
+	glm::vec2 t = _cam->rot * (rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(b, 1).coords));
+	glVertex2f(t[0] / _resRatio, t[1]);
 	glEnd();
 }
 
 void engine::draw_shape(const surface_t *s)
 {
-	Eigen::Matrix<float, 3, 1> r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
-	Eigen::Matrix<float, 2, 1> t1 = _cam->rot * r1;
-	Eigen::Matrix<float, 3, 1> r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
-	Eigen::Matrix<float, 2, 1> t2 = _cam->rot * r2;
-	Eigen::Matrix<float, 3, 1> r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
-	Eigen::Matrix<float, 2, 1> t3 = _cam->rot * r3;
+	auto r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
+	auto t1 = _cam->rot * r1;
+	auto r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
+	auto t2 = _cam->rot * r2;
+	auto r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
+	auto t3 = _cam->rot * r3;
 
-	if (r1(2) < 0 || r2(2) < 0 || r3(2) < 0)
+	if (r1[2] < 0 || r2[2] < 0 || r3[2] < 0)
 		return;
 
 	glBegin(GL_LINE_STRIP);
-	glVertex2f(t1(0) / _resRatio, t1(1));
-	glVertex2f(t2(0) / _resRatio, t2(1));
-	glVertex2f(t3(0) / _resRatio, t3(1));
-	glVertex2f(t1(0) / _resRatio, t1(1));
+	glVertex2f(t1[0] / _resRatio, t1[1]);
+	glVertex2f(t2[0] / _resRatio, t2[1]);
+	glVertex2f(t3[0] / _resRatio, t3[1]);
+	glVertex2f(t1[0] / _resRatio, t1[1]);
 	glEnd();
 }
 
 void engine::fill_shape(const surface_t *s)
 {
-	Eigen::Matrix<float, 3, 1> r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
-	Eigen::Matrix<float, 2, 1> t1 = _cam->rot * r1;
-	Eigen::Matrix<float, 3, 1> r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
-	Eigen::Matrix<float, 2, 1> t2 = _cam->rot * r2;
-	Eigen::Matrix<float, 3, 1> r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
-	Eigen::Matrix<float, 2, 1> t3 = _cam->rot * r3;
+	auto r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
+	auto t1 = _cam->rot * r1;
+	auto r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
+	auto t2 = _cam->rot * r2;
+	auto r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
+	auto t3 = _cam->rot * r3;
 
-	if (r1(2) < 0 || r2(2) < 0 || r3(2) < 0)
+	if (r1[2] < 0 || r2[2] < 0 || r3[2] < 0)
 		return;
 
 	glBegin(GL_TRIANGLES);
-	glVertex2f(t1(0) / _resRatio, t1(1));
-	glVertex2f(t2(0) / _resRatio, t2(1));
-	glVertex2f(t3(0) / _resRatio, t3(1));
+	glVertex2f(t1[0] / _resRatio, t1[1]);
+	glVertex2f(t2[0] / _resRatio, t2[1]);
+	glVertex2f(t3[0] / _resRatio, t3[1]);
 	glEnd();
 }
-/*
-std::vector<std::string> engine::split(const std::string &s, char delimiter)
-{
-	std::vector<std::string> tokens;
-	std::string token;
-	std::istringstream tokenStream(s);
-	while (std::getline(tokenStream, token, delimiter)) {
-		tokens.push_back(token);
-	}
-	return tokens;
-}
-*/
 
 void engine::render_world()
 {
@@ -205,7 +194,7 @@ void engine::render_world()
 	glVertex2f(0, 0); // center of circle
 	for (int i = 0; i <= 90; i++) {
 		glVertex2f(
-			_cam->rot(0, 0) * cos(i * 2.0f * M_PI / 90.0f) / _resRatio, _cam->rot(0, 0) * sin(i * 2.0f * M_PI / 90.0f)
+			_cam->rot[0][0] * cos(i * 2.0f * M_PI / 90.0f) / _resRatio, _cam->rot[0][0] * sin(i * 2.0f * M_PI / 90.0f)
 		);
 	}
 	glEnd(); //END
@@ -243,11 +232,11 @@ void engine::render_world()
 		}
 	}
 
-	float m_x = (((float)mouse_x / (float)_screenWidth) * 2.0f - 1.0f) * _resRatio / _cam->rot(0, 0);
-	float m_y = (((float)mouse_y / (float)_screenHeight) * -2.0f + 1.0f) / _cam->rot(0, 0);
+	float m_x = (((float)mouse_x / (float)_screenWidth) * 2.0f - 1.0f) * _resRatio / _cam->rot[0][0];
+	float m_y = (((float)mouse_y / (float)_screenHeight) * -2.0f + 1.0f) / _cam->rot[0][0];
 
 	point3_t test(-m_x, -m_y, -std::sqrt(1.0f - std::sqrt(m_x * m_x + m_y * m_y)));
-	test.coords = rot_y(_cam->yaw).inverse() * (rot_x(_cam->pit).inverse() * test.coords);
+	test.coords = glm::inverse(rot_y(_cam->yaw)) * (glm::inverse(rot_x(_cam->pit)) * test.coords);
 
 	float r = std::sqrt(test[0] * test[0] + test[1] * test[1] + test[2] * test[2]);
 	polar_t mp(
@@ -282,12 +271,12 @@ void engine::user_input()
 		_cam->pit = CLAMP(_cam->pit - 0.0015f, 0, 180);
 	}
 	if (keystate[SDL_SCANCODE_Q]) {
-		_cam->rot(0, 0) += 0.00005f;
-		_cam->rot(1, 1) += 0.00005f;
+		_cam->rot[0][0] += 0.00005f;
+		_cam->rot[1][1] += 0.00005f;
 	}
 	if (keystate[SDL_SCANCODE_E]) {
-		_cam->rot(0, 0) -= 0.00005f;
-		_cam->rot(1, 1) -= 0.00005f;
+		_cam->rot[0][0] -= 0.00005f;
+		_cam->rot[1][1] -= 0.00005f;
 	}
 
 	while (SDL_PollEvent(&evnt)) {

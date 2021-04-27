@@ -1,6 +1,7 @@
 #pragma once
 
-#include <eigen3/Eigen/Dense>
+#include <glm/glm.hpp>
+#include <glm/vec3.hpp>
 #include <vector>
 
 #include "../biome/biome.h"
@@ -17,10 +18,10 @@
 
 struct point3_t
 {
-	Eigen::Matrix<float, 3, 1> coords;
+	glm::vec3 coords;
 	point3_t();
 	point3_t(const float &, const float &, const float &);
-	point3_t(const Eigen::Matrix<float, 3, 1> &);
+	point3_t(const glm::vec3 &);
 	point3_t(const polar_t &, const float &);
 	const float operator[](const size_t &) const;
 };

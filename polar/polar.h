@@ -1,11 +1,12 @@
 #pragma once
 
-#include <eigen3/Eigen/Dense>
+#include <glm/glm.hpp>
+#include <glm/vec2.hpp>
 
 class polar_t
 {
 private:
-	Eigen::Matrix<float, 2, 1> coords;
+	glm::vec2 coords;
 public:
 	polar_t();
 	polar_t(const float &, const float &);

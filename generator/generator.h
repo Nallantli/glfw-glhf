@@ -28,7 +28,7 @@ std::pair<surface_t *, float> find_nearest_land(surface_t *, const std::vector<s
 std::pair<surface_t *, float> find_nearest_ocean(surface_t *, const std::vector<surface_t *> &);
 std::vector<surface_t *> get_lake_edges(surface_t *, std::vector<surface_t *> &);
 std::vector<surface_t *> get_water_extent(surface_t *, const std::vector<surface_t *> &);
-void generate_world(std::vector<surface_t *> &);
+void generate_world(std::vector<surface_t *> &, const int &SEED);
 void iterate_land(surface_t *, int);
 void propagate_wind_east(surface_t *, float, const float &, std::vector<surface_t *> &);
 void propagate_wind_west(surface_t *, float, const float &, std::vector<surface_t *> &);

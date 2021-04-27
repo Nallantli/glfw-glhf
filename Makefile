@@ -5,8 +5,8 @@ CC=$(GCC) -Wall $(CV) -O2
 
 LIBS=-lglfw3 -lopengl32 -lglew32 -lmingw32 -lSDL2main -lSDL2
 
-gen.exe: main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o
-	$(CC) -o $@ main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o $(LIBS)
+gen.exe: main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o shader.o
+	$(CC) -o $@ main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o shader.o $(LIBS)
 
 main.o: main.cpp
 	$(CC) -o $@ main.cpp -c $(LIBS)
@@ -25,6 +25,9 @@ polar.o: polar/polar.cpp
 
 surface.o: surface/surface.cpp
 	$(CC) -o $@ surface/surface.cpp -c $(LIBS)
+
+shader.o: shader/shader.cpp
+	$(CC) -o $@ shader/shader.cpp -c $(LIBS)
 
 QuickHull.o: quickhull/QuickHull.cpp
 	$(CC) -o $@ quickhull/QuickHull.cpp -c $(LIBS)

@@ -7,7 +7,8 @@
 #include <windows.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <eigen3/Eigen/Dense>
+#include <glm/glm.hpp>
+#include <glm/mat2x3.hpp>
 #include <SDL2/SDL.h>
 #include <iostream>
 #include <cmath>
@@ -29,7 +30,7 @@ struct camera
 {
     float yaw;
     float pit;
-    Eigen::Matrix<float, 2, 3> rot;
+    glm::mat2x3 rot;
 
     camera(const float &yaw, const float &pit, const float &dist);
 };
@@ -37,7 +38,7 @@ struct camera
 class engine
 {
 public:
-    engine();
+    engine(const long long &seed);
     ~engine();
     void run();
 
