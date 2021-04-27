@@ -13,4 +13,5 @@ public:
 	const float operator[](const size_t &) const;
 	const bool operator==(const polar_t &) const;
 	const bool operator!=(const polar_t &) const;
+	const bool operator<(const polar_t &) const;
 };

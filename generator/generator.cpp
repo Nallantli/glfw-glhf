@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <algorithm>
 #include <chrono>
+#include <map>
 
 #include "../quickhull/QuickHull.hpp"
 #include "../perlin/perlin.hpp"
@@ -354,15 +355,31 @@ void generate_world(std::vector<surface_t *> &set, const int &SEED)
 		);
 	}
 
+	std::map<std::pair<polar_t, polar_t>, std::vector<surface_t *>> edge_map;
+
 	for (unsigned int i = 0; i < indexBuffer.size(); i += 3) {
-		set.push_back(
+		surface_t *s =
 			new surface_t{
 			translated_vertices[indexBuffer[i]],
 			translated_vertices[indexBuffer[i + 1]],
 			translated_vertices[indexBuffer[i + 2]]
-			}
-		);
+		};
+		if (s->a < s->b)
+			edge_map[{s->a, s->b}].push_back(s);
+		else
+			edge_map[{s->b, s->a}].push_back(s);
+		if (s->b < s->c)
+			edge_map[{s->b, s->c}].push_back(s);
+		else
+			edge_map[{s->c, s->b}].push_back(s);
+		if (s->c < s->a)
+			edge_map[{s->c, s->a}].push_back(s);
+		else
+			edge_map[{s->a, s->c}].push_back(s);
+		set.push_back(s);
 	}
+
+	translated_vertices.clear();
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
@@ -370,19 +387,16 @@ void generate_world(std::vector<surface_t *> &set, const int &SEED)
 
 	std::cout << "Setting neighbors...\n";
 	begin = std::chrono::steady_clock::now();
-	translated_vertices.clear();
-	for (auto &f : set) {
-		for (auto &f2 : set) {
-			if (f == f2)
-				continue;
-			if (std::find(f->neighbors.begin(), f->neighbors.end(), f2) != f->neighbors.end())
-				continue;
-			if (does_share_side(f, f2)) {
-				f->neighbors.push_back(f2);
-				f2->neighbors.push_back(f);
+	for (auto &e : edge_map) {
+		for (auto &s : e.second) {
+			for (auto &s2 : e.second) {
+				if (s == s2)
+					continue;
+				s->neighbors.push_back(s2);
 			}
 		}
 	}
+	edge_map.clear();
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
@@ -508,6 +522,10 @@ void generate_world(std::vector<surface_t *> &set, const int &SEED)
 	std::cout << "Elapsed: "
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
 		<< "[us]" << std::endl;
+
+	std::cout << "---------------------------------\n";
+	std::cout << "Face Count: " << set.size() << "\n";
+	std::cout << "---------------------------------\n";
 
 	std::cout << "Done.\n";
 }

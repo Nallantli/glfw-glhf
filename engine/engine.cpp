@@ -265,10 +265,10 @@ void engine::user_input()
 		_cam->yaw = std::fmod(_cam->yaw + 0.0015f + 360.0f, 360);
 	}
 	if (keystate[SDL_SCANCODE_W] || keystate[SDL_SCANCODE_UP]) {
-		_cam->pit = CLAMP(_cam->pit + 0.0015f, 0, 180);
+		_cam->pit = CLAMP(_cam->pit - 0.0015f, 0, 180);
 	}
 	if (keystate[SDL_SCANCODE_S] || keystate[SDL_SCANCODE_DOWN]) {
-		_cam->pit = CLAMP(_cam->pit - 0.0015f, 0, 180);
+		_cam->pit = CLAMP(_cam->pit + 0.0015f, 0, 180);
 	}
 	if (keystate[SDL_SCANCODE_Q]) {
 		_cam->rot[0][0] += 0.00005f;

@@ -30,6 +30,7 @@ struct surface_t
 
 	surface_t(const polar_t &, const polar_t &, const polar_t &);
 	const bool operator==(const surface_t &);
+	const bool operator<(const surface_t &);
 	const polar_t get_center() const;
 	const point3_t get_center_c() const;
 	const biome_t get_biome() const;

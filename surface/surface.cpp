@@ -39,3 +39,8 @@ const biome_t surface_t::get_biome() const
 	int _aridity = CLAMP(aridity * 5.0f + foehn * 0.25, 0.0f, 6.0f);
 	return biome_map[_height][6 - _aridity];
 }
+
+const bool surface_t::operator<(const surface_t &f)
+{
+	return a < f.a || b < f.b || c < f.c;
+}
