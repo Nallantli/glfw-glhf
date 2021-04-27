@@ -3,7 +3,7 @@
 /* -------- OPTIONS --------- */
 
 #define HEIGHT_MULTIPLIER		1.5f
-#define ARIDITY_MULTIPLIER		3.0f
+#define ARIDITY_MULTIPLIER		3.5f
 #define INLAND_LAKE_SIZE		64
 #define ISLAND_BRANCHING_SIZE	16
 #define FACE_SIZE				2

@@ -358,12 +358,28 @@ void generate_world(std::vector<surface_t *> &set, const int &SEED)
 	std::map<std::pair<polar_t, polar_t>, std::vector<surface_t *>> edge_map;
 
 	for (unsigned int i = 0; i < indexBuffer.size(); i += 3) {
-		surface_t *s =
-			new surface_t{
+		std::vector<polar_t> ps = {
 			translated_vertices[indexBuffer[i]],
 			translated_vertices[indexBuffer[i + 1]],
-			translated_vertices[indexBuffer[i + 2]]
-		};
+			translated_vertices[indexBuffer[i + 2]] };
+		surface_t *s;
+		if (ps[0][0] < ps[1][0] && ps[0][0] < ps[2][0]) {
+			s = new surface_t{
+			ps[0],
+			ps[1],
+			ps[2] };
+		} else if (ps[1][0] < ps[0][0] && ps[1][0] < ps[2][0]) {
+			s = new surface_t{
+			ps[1],
+			ps[2],
+			ps[0] };
+		} else if (ps[2][0] < ps[0][0] && ps[2][0] < ps[1][0]) {
+			s = new surface_t{
+			ps[2],
+			ps[0],
+			ps[1] };
+		}
+
 		if (s->a < s->b)
 			edge_map[{s->a, s->b}].push_back(s);
 		else
