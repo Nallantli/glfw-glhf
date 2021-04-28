@@ -6,6 +6,14 @@ The process takes into account:
 2. Aridity map (distance to nearest fresh water source)
 3. Tropics/Wind map (essentially a sinusoidal function with values affected by land height)
 
-Mapped biomes:
+# Mapped biomes
 
 ![biomemap](biomemap.png)
+
+# Libraries
+
+* GLFW
+* GLM
+* GLEW
+* SDL2
+* [QuickHull](https://github.com/akuukka/quickhull) (Embedded)
