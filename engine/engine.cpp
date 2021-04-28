@@ -8,11 +8,10 @@
 
 enum Mode
 {
-	MODE_WIRE,
+	MODE_LANDMASS,
 	MODE_FLAT,
 	MODE_DATA,
-	MODE_FOEHN,
-	MODE_MERCATOR
+	MODE_FOEHN
 };
 
 Mode mode = MODE_FLAT;
@@ -59,7 +58,7 @@ camera::camera(const float &yaw, const float &pit, const float &dist) : yaw{ yaw
 	rot[1][1] = dist;
 }
 
-engine::engine(const long long &seed)
+engine::engine(const int &seed)
 	: _seed(seed)
 {
 #ifdef _WIN32
@@ -73,7 +72,7 @@ engine::engine(const long long &seed)
 	_screenWidth = 2560;
 	_screenHeight = 1440;
 	_resRatio = _screenWidth / _screenHeight;
-	_cam = new camera(180, 90, 1);
+	_cam = new camera(270, 90, 1);
 	_windowState = windowState::RUN;
 	_fpsMax = 120;
 }
@@ -110,7 +109,7 @@ void engine::init_engine()
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	generate_world(_set, _seed);
+	generate_world(_set, landmasses, _seed);
 	std::cout << "World generated with seed: " << _seed << std::endl;
 	engine_loop();
 }
@@ -192,17 +191,34 @@ void engine::render_world()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glColor3f(0.0f, 0.0f, 0.5f);
 
-	if (mode == MODE_MERCATOR) {
-		glBegin(GL_QUADS);
-		glVertex2f(-1, -1);
-		glVertex2f(1, -1);
-		glVertex2f(1, 1);
-		glVertex2f(-1, 1);
-		glEnd();
-		for (auto &s : _set) {
-			if (s->type == surface_t::FACE_LAND) {
-				auto biome = s->get_biome();
-				glColor3f(biome.r, biome.g, biome.b);
+	switch (projection) {
+		case PROJ_MERC:
+		{
+			glBegin(GL_QUADS);
+			glVertex2f(-1, -1);
+			glVertex2f(1, -1);
+			glVertex2f(1, 1);
+			glVertex2f(-1, 1);
+			glEnd();
+			for (auto &s : _set) {
+				if (s->type != surface_t::FACE_LAND)
+					continue;
+				switch (mode) {
+					case MODE_LANDMASS:
+						glColor3f(s->landmass->r, s->landmass->g, s->landmass->b);
+						break;
+					case MODE_FLAT: {
+						auto biome = s->get_biome();
+						glColor3f(biome.r, biome.g, biome.b);
+						break;
+					}
+					case MODE_FOEHN:
+						glColor3f(s->foehn, s->foehn, s->foehn);
+						break;
+					case MODE_DATA:
+						glColor3f(s->aridity, s->height, 0.0f);
+						break;
+				}
 				glBegin(GL_TRIANGLES);
 				if (s->b[0] * s->a[1] + s->c[0] * s->b[1] + s->a[0] * s->c[1] > s->a[0] * s->b[1] + s->b[0] * s->c[1] + s->c[0] * s->a[1]) {
 					glVertex2f(s->a[0] / 180.0f - 1.0f, -s->a[1] / 90.0f + 1.0f);
@@ -237,66 +253,123 @@ void engine::render_world()
 				}
 				glEnd();
 			}
-		}
-	} else {
-		glBegin(GL_TRIANGLE_FAN); //BEGIN CIRCLE
-		glVertex2f(0, 0); // center of circle
-		for (int i = 0; i <= 90; i++) {
-			glVertex2f(
-				_cam->rot[0][0] * cos(i * 2.0f * M_PI / 90.0f) / _resRatio, _cam->rot[0][0] * sin(i * 2.0f * M_PI / 90.0f)
+
+			float m_x = ((float)mouse_x / (float)_screenWidth) * 360.0f;
+			float m_y = ((float)mouse_y / (float)_screenHeight) * 180.0f;
+
+			polar_t mp(
+				m_x,
+				m_y
 			);
-		}
-		glEnd(); //END
 
-		for (auto &s : _set) {
-			switch (mode) {
-				case MODE_WIRE:
-					if (s->type == surface_t::FACE_LAND) {
-						auto biome = s->get_biome();
-						glColor3f(biome.r, biome.g, biome.b);
-						fill_shape(s);
+			_selected = get_face_from_point(mp, _set);
+			if (_selected != NULL) {
+				glColor3f(1.0f, 0.0f, 0.0f);
+				if (_selected->b[0] * _selected->a[1] + _selected->c[0] * _selected->b[1] + _selected->a[0] * _selected->c[1] > _selected->a[0] * _selected->b[1] + _selected->b[0] * _selected->c[1] + _selected->c[0] * _selected->a[1]) {
+					glBegin(GL_LINE_STRIP);
+					glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+					glVertex2f(_selected->b[0] / 180.0f - 1.0f, -_selected->b[1] / 90.0f + 1.0f);
+					glVertex2f(_selected->c[0] / 180.0f - 1.0f, -_selected->c[1] / 90.0f + 1.0f);
+					glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+					glEnd();
+				} else {
+					if (_selected->b[0] < _selected->get_center()[0]) {
+						glBegin(GL_LINE_STRIP);
+						glVertex2f((_selected->a[0] + 360.0f) / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->b[0] + 360.0f) / 180.0f - 1.0f, -_selected->b[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->c[0] / 180.0f - 1.0f, -_selected->c[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->a[0] + 360.0f) / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glEnd();
+
+						glBegin(GL_LINE_STRIP);
+						glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->b[0] / 180.0f - 1.0f, -_selected->b[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->c[0] - 360.0f) / 180.0f - 1.0f, -_selected->c[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glEnd();
+					} else if (_selected->c[0] < _selected->get_center()[0]) {
+						glBegin(GL_LINE_STRIP);
+						glVertex2f((_selected->a[0] + 360.0f) / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->b[0] / 180.0f - 1.0f, -_selected->b[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->b[0] + 360.0f) / 180.0f - 1.0f, -_selected->c[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->a[0] + 360.0f) / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glEnd();
+
+						glBegin(GL_LINE_STRIP);
+						glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->b[0] - 360.0f) / 180.0f - 1.0f, -_selected->b[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->c[0] / 180.0f - 1.0f, -_selected->c[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glEnd();
+					} else {
+						glBegin(GL_LINE_STRIP);
+						glVertex2f((_selected->a[0] + 360.0f) / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->b[0] / 180.0f - 1.0f, -_selected->b[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->c[0] / 180.0f - 1.0f, -_selected->c[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->a[0] + 360.0f) / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glEnd();
+
+						glBegin(GL_LINE_STRIP);
+						glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->b[0] - 360.0f) / 180.0f - 1.0f, -_selected->b[1] / 90.0f + 1.0f);
+						glVertex2f((_selected->c[0] - 360.0f) / 180.0f - 1.0f, -_selected->c[1] / 90.0f + 1.0f);
+						glVertex2f(_selected->a[0] / 180.0f - 1.0f, -_selected->a[1] / 90.0f + 1.0f);
+						glEnd();
 					}
-					glColor3f(1.0f, 1.0f, 1.0f);
-					draw_shape(s);
-					break;
-				case MODE_FOEHN:
-					if (s->type == surface_t::FACE_LAND) {
-						glColor3f(s->foehn, s->foehn, s->foehn);
-						fill_shape(s);
-					}
-					break;
-				case MODE_DATA:
-					if (s->type == surface_t::FACE_LAND) {
-						glColor3f(s->aridity, s->height, 0.0f);
-						fill_shape(s);
-					}
-					break;
-				case MODE_FLAT:
-					if (s->type == surface_t::FACE_LAND) {
-						auto biome = s->get_biome();
-						glColor3f(biome.r, biome.g, biome.b);
-						fill_shape(s);
-					}
-					break;
+				}
 			}
+			break;
 		}
+		case PROJ_SPHERE:
+		{
+			glBegin(GL_TRIANGLE_FAN); //BEGIN CIRCLE
+			glVertex2f(0, 0); // center of circle
+			for (int i = 0; i <= 90; i++) {
+				glVertex2f(
+					_cam->rot[0][0] * cos(i * 2.0f * M_PI / 90.0f) / _resRatio, _cam->rot[0][0] * sin(i * 2.0f * M_PI / 90.0f)
+				);
+			}
+			glEnd(); //END
+			for (auto &s : _set) {
+				if (s->type != surface_t::FACE_LAND)
+					continue;
+				switch (mode) {
+					case MODE_LANDMASS:
+						glColor3f(s->landmass->r, s->landmass->g, s->landmass->b);
+						break;
+					case MODE_FLAT: {
+						auto biome = s->get_biome();
+						glColor3f(biome.r, biome.g, biome.b);
+						break;
+					}
+					case MODE_FOEHN:
+						glColor3f(s->foehn, s->foehn, s->foehn);
+						break;
+					case MODE_DATA:
+						glColor3f(s->aridity, s->height, 0.0f);
+						break;
+				}
+				fill_shape(s);
+			}
 
-		float m_x = (((float)mouse_x / (float)_screenWidth) * 2.0f - 1.0f) * _resRatio / _cam->rot[0][0];
-		float m_y = (((float)mouse_y / (float)_screenHeight) * -2.0f + 1.0f) / _cam->rot[0][0];
+			float m_x = (((float)mouse_x / (float)_screenWidth) * 2.0f - 1.0f) * _resRatio / _cam->rot[0][0];
+			float m_y = (((float)mouse_y / (float)_screenHeight) * -2.0f + 1.0f) / _cam->rot[0][0];
 
-		point3_t test(-m_x, -m_y, -std::sqrt(1.0f - std::sqrt(m_x * m_x + m_y * m_y)));
-		test.coords = glm::inverse(rot_y(_cam->yaw)) * (glm::inverse(rot_x(_cam->pit)) * test.coords);
+			point3_t test(-m_x, -m_y, -std::sqrt(1.0f - std::sqrt(m_x * m_x + m_y * m_y)));
+			test.coords = glm::inverse(rot_y(_cam->yaw)) * (glm::inverse(rot_x(_cam->pit)) * test.coords);
 
-		float r = std::sqrt(test[0] * test[0] + test[1] * test[1] + test[2] * test[2]);
-		polar_t mp(
-			180.0f * std::atan2(test[1], test[0]) / M_PI + 180.0f,
-			180.0f * std::asin(test[2] / r) / M_PI + 90.0f
-		);
+			float r = std::sqrt(test[0] * test[0] + test[1] * test[1] + test[2] * test[2]);
+			polar_t mp(
+				180.0f * std::atan2(test[1], test[0]) / M_PI + 180.0f,
+				180.0f * std::asin(test[2] / r) / M_PI + 90.0f
+			);
 
-		_selected = get_face_from_point(mp, _set);
-		if (_selected != NULL) {
-			glColor3f(1.0f, 0.0f, 0.0f);
-			draw_shape(_selected);
+			_selected = get_face_from_point(mp, _set);
+			if (_selected != NULL) {
+				glColor3f(1.0f, 0.0f, 0.0f);
+				draw_shape(_selected);
+			}
+			break;
 		}
 	}
 
@@ -350,7 +423,7 @@ void engine::user_input()
 			case SDL_KEYDOWN:
 				switch (evnt.key.keysym.scancode) {
 					case SDL_SCANCODE_1:
-						mode = MODE_WIRE;
+						mode = MODE_LANDMASS;
 						break;
 					case SDL_SCANCODE_2:
 						mode = MODE_FLAT;
@@ -361,8 +434,8 @@ void engine::user_input()
 					case SDL_SCANCODE_4:
 						mode = MODE_FOEHN;
 						break;
-					case SDL_SCANCODE_5:
-						mode = MODE_MERCATOR;
+					case SDL_SCANCODE_TAB:
+						projection = (projection_t)((projection + 1) % 2);
 						break;
 					case SDL_SCANCODE_ESCAPE:
 						_windowState = windowState::EXIT;
@@ -419,7 +492,10 @@ void engine::engine_loop()
 	delete _cam;
 	for (auto &e : _set)
 		delete e;
+	for (auto &e : landmasses)
+		delete e;
 	_set.clear();
+	landmasses.clear();
 }
 
 void engine::fps_counter()

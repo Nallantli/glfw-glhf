@@ -308,7 +308,17 @@ void set_foehn(const std::vector<surface_t *> &set)
 	}
 }
 
-void generate_world(std::vector<surface_t *> &set, const int &SEED)
+void make_landmasses(surface_t *curr)
+{
+	for (auto &n : curr->neighbors) {
+		if (n->type != surface_t::FACE_LAND || n->landmass != NULL)
+			continue;
+		n->landmass = curr->landmass;
+		make_landmasses(n);
+	}
+}
+
+void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &landmasses, const int &SEED)
 {
 	perlin p(SEED);
 	std::vector<polar_t> ps;
@@ -418,22 +428,6 @@ void generate_world(std::vector<surface_t *> &set, const int &SEED)
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
 		<< "[us]" << std::endl;
 
-	/*std::ifstream file("cities500.txt");
-	if (!file.is_open())
-		return 1;
-
-	std::string line;
-	size_t c = 0;
-	while (std::getline(file, line)) {
-		auto data = split(line, '\t');
-		ps.push_back(polar_t(std::stof(data[5]) + 180.0f, std::stof(data[4]) + 90.0f));
-		c++;
-	}
-
-	file.close();
-
-	std::cout << "Cites: " << c << "\n";*/
-
 	std::cout << "Setting Islands...\n";
 	begin = std::chrono::steady_clock::now();
 	for (auto i = 0; i < 16;i++) {
@@ -493,7 +487,7 @@ void generate_world(std::vector<surface_t *> &set, const int &SEED)
 	std::cout << "Setting Springs...\n";
 	begin = std::chrono::steady_clock::now();
 	for (auto &f : set) {
-		if (f->type != surface_t::FACE_LAND || (f->height < 0.4f && f->height > 0.5f)) {
+		if (f->type != surface_t::FACE_LAND || (f->height < 0.5f && f->height > 0.6f)) {
 			continue;
 		}
 		if (rand() % 64 == 0)
@@ -534,6 +528,26 @@ void generate_world(std::vector<surface_t *> &set, const int &SEED)
 	std::cout << "Setting Foehn Map...\n";
 	begin = std::chrono::steady_clock::now();
 	set_foehn(set);
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: "
+		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+		<< "[us]" << std::endl;
+
+	std::cout << "Setting Landmass Map...\n";
+	begin = std::chrono::steady_clock::now();
+	for (auto &s : set) {
+		if (s->landmass == NULL) {
+			landmass_t *l = new landmass_t{
+				(float)rand() / (float)RAND_MAX,
+				(float)rand() / (float)RAND_MAX,
+				(float)rand() / (float)RAND_MAX
+			};
+			s->landmass = l;
+			landmasses.push_back(l);
+			l->members.push_back(s);
+			make_landmasses(s);
+		}
+	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()

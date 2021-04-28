@@ -6,6 +6,9 @@
 #include "../polar/polar.h"
 #include "../biome/biome.h"
 
+struct surface_t;
+struct landmass_t;
+
 struct surface_t
 {
 	const polar_t a;
@@ -28,6 +31,8 @@ struct surface_t
 
 	std::vector<surface_t *> neighbors;
 
+	landmass_t * landmass = NULL;
+
 	surface_t(const polar_t &, const polar_t &, const polar_t &);
 	const bool operator==(const surface_t &);
 	const bool operator<(const surface_t &);
@@ -39,4 +44,10 @@ private:
 	polar_t s_center;
 	point3_t c_center;
 	void set_center();
+};
+
+struct landmass_t
+{
+	float r, g, b;
+	std::vector<surface_t *> members;
 };

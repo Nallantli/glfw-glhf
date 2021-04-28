@@ -38,7 +38,7 @@ struct camera
 class engine
 {
 public:
-    engine(const long long &seed);
+    engine(const int &seed);
     ~engine();
     void run();
 
@@ -60,6 +60,7 @@ private:
     float _resRatio;
     std::map<int, bool> _KEYS;
     std::vector<surface_t *> _set;
+    std::vector<landmass_t *> landmasses;
     camera *_cam;
     windowState _windowState;
     surface_t *_selected;
@@ -67,7 +68,13 @@ private:
     float _fps;
     float _fpsMax;
 
+    enum projection_t
+    {
+        PROJ_SPHERE,
+        PROJ_MERC
+    } projection = PROJ_SPHERE;
+
     int mouse_x;
     int mouse_y;
-    time_t _seed;
+    int _seed;
 };
