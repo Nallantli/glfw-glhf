@@ -349,7 +349,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 			});
 	}
 
-	std::cout << "Setting triangles...\n";
+	std::cout << "Building convex hull...\n";
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 	auto hull = qh.getConvexHull(qhpoints, true, false);
 	const auto &indexBuffer = hull.getIndexBuffer();
@@ -357,6 +357,13 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	qhpoints.clear();
 	ps.clear();
 	std::vector<polar_t> translated_vertices;
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: "
+		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+		<< "[us]" << std::endl;
+
+	std::cout << "Translating vertices...\n";
+	begin = std::chrono::steady_clock::now();
 
 	for (auto &v : vertexBuffer) {
 		float r = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
@@ -364,6 +371,14 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 			polar_t(180.0f * std::atan2(v.y, v.x) / M_PI + 180.0f, 180.0f * std::asin(v.z / r) / M_PI + 90.0f)
 		);
 	}
+
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: "
+		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+		<< "[us]" << std::endl;
+
+	std::cout << "Building triangle surfaces...\n";
+	begin = std::chrono::steady_clock::now();
 
 	std::map<std::pair<polar_t, polar_t>, std::vector<surface_t *>> edge_map;
 
@@ -383,7 +398,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 			ps[1],
 			ps[2],
 			ps[0] };
-		} else if (ps[2][0] < ps[0][0] && ps[2][0] < ps[1][0]) {
+		} else {
 			s = new surface_t{
 			ps[2],
 			ps[0],
@@ -406,7 +421,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	}
 
 	translated_vertices.clear();
-	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
 		<< "[us]" << std::endl;
