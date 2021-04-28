@@ -68,9 +68,10 @@ engine::engine(const int &seed)
 		fwprintf(stderr, L"SetProcessDPIAware: %s\n", err.ErrorMessage());
 	}
 #endif
+
 	_window = nullptr;
-	_screenWidth = 2560;
-	_screenHeight = 1440;
+	_screenWidth = 1600;
+	_screenHeight = 900;
 	_resRatio = _screenWidth / _screenHeight;
 	_cam = new camera(270, 90, 1);
 	_windowState = windowState::RUN;
@@ -89,6 +90,10 @@ void engine::init_engine()
 {
 	srand(_seed);
 	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_DisplayMode DM;
+	std::cout << SDL_GetCurrentDisplayMode(0, &DM);
+	_screenWidth = DM.w;
+	_screenHeight = DM.h;
 	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (_window == nullptr) {
 		std::cerr << "SDL_window could not be created.";
