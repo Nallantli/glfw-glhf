@@ -92,8 +92,8 @@ void engine::init_engine()
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_DisplayMode DM;
 	std::cout << SDL_GetCurrentDisplayMode(0, &DM);
-	_screenWidth = DM.w;
-	_screenHeight = DM.h;
+	_screenWidth = DM.w / 1.2;
+	_screenHeight = DM.h / 1.2;
 	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (_window == nullptr) {
 		std::cerr << "SDL_window could not be created.";
