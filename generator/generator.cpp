@@ -382,6 +382,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 
 	std::map<std::pair<polar_t, polar_t>, std::vector<surface_t *>> edge_map;
 
+	unsigned long long count = 0;
 	for (unsigned int i = 0; i < indexBuffer.size(); i += 3) {
 		std::vector<polar_t> ps = {
 			translated_vertices[indexBuffer[i]],
@@ -390,16 +391,19 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		surface_t *s;
 		if (ps[0][0] < ps[1][0] && ps[0][0] < ps[2][0]) {
 			s = new surface_t{
+			count,
 			ps[0],
 			ps[1],
 			ps[2] };
 		} else if (ps[1][0] < ps[0][0] && ps[1][0] < ps[2][0]) {
 			s = new surface_t{
+			count,
 			ps[1],
 			ps[2],
 			ps[0] };
 		} else {
 			s = new surface_t{
+			count,
 			ps[2],
 			ps[0],
 			ps[1] };
@@ -418,6 +422,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		else
 			edge_map[{s->a, s->c}].push_back(s);
 		set.push_back(s);
+		count++;
 	}
 
 	translated_vertices.clear();
@@ -445,9 +450,9 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 
 	std::cout << "Setting Islands...\n";
 	begin = std::chrono::steady_clock::now();
-	for (auto i = 0; i < 16;i++) {
+	for (auto i = 0; i < 16; i++) {
 		auto origin = set[rand() % set.size()];
-		float size = ((float)rand() / (float)RAND_MAX) * 0.5f;
+		float size = ((float)rand() / (float)RAND_MAX) * 0.4f + 0.1f;
 		for (auto &e : set) {
 			if (true_dist(origin, e) < size)
 				iterate_land(e, ISLAND_BRANCHING_SIZE);
@@ -470,7 +475,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 			p.get(p.get((cc[0] + 1.0f) / 16.0f, (cc[1] + 1.0f) / 16.0f, 4.0f, 4), (cc[2] + 1.0f) / 16.0f, 4.0f, 4) +
 			p.get(p.get((cc[0] + 1.0f) / 8.0f, (cc[1] + 1.0f) / 8.0f, 8.0f, 4), (cc[2] + 1.0f) / 8.0f, 8.0f, 4) +
 			p.get(p.get((cc[0] + 1.0f) / 4.0f, (cc[1] + 1.0f) / 4.0f, 16.0f, 4), (cc[2] + 1.0f) / 4.0f, 16.0f, 4);
-		f->height = (n.second + MAX(0, pm / 4.0f - 0.25f)) * HEIGHT_MULTIPLIER;
+		f->height = (n.second * 1.8f + MAX(0, pm / 5.0f - 0.25f)) * HEIGHT_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
@@ -533,7 +538,13 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		if (f->type != surface_t::FACE_LAND)
 			continue;
 		std::pair<surface_t *, float> n = find_nearest_lake(f, set);
-		f->aridity = n.second * ARIDITY_MULTIPLIER;
+		point3_t cc = f->get_center_c();
+		float pm =
+			p.get(p.get((cc[0] + 101.0f) / 32.0f, (cc[1] + 101.0f) / 32.0f, 2.0f, 4), (cc[2] + 101.0f) / 32.0f, 2.0f, 4) +
+			p.get(p.get((cc[0] + 101.0f) / 16.0f, (cc[1] + 101.0f) / 16.0f, 4.0f, 4), (cc[2] + 101.0f) / 16.0f, 4.0f, 4) +
+			p.get(p.get((cc[0] + 101.0f) / 8.0f, (cc[1] + 101.0f) / 8.0f, 8.0f, 4), (cc[2] + 101.0f) / 8.0f, 8.0f, 4) +
+			p.get(p.get((cc[0] + 101.0f) / 4.0f, (cc[1] + 101.0f) / 4.0f, 16.0f, 4), (cc[2] + 101.0f) / 4.0f, 16.0f, 4);
+		f->aridity = (n.second * 1.8f + MAX(0, pm / 5.0f - 0.25f)) * ARIDITY_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "

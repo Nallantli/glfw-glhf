@@ -11,6 +11,8 @@ struct landmass_t;
 
 struct surface_t
 {
+	const unsigned long long ID;
+
 	const polar_t a;
 	const polar_t b;
 	const polar_t c;
@@ -33,7 +35,7 @@ struct surface_t
 
 	landmass_t * landmass = NULL;
 
-	surface_t(const polar_t &, const polar_t &, const polar_t &);
+	surface_t(const unsigned long long &ID, const polar_t &, const polar_t &, const polar_t &);
 	const bool operator==(const surface_t &);
 	const bool operator<(const surface_t &);
 	const polar_t get_center() const;

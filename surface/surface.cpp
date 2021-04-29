@@ -1,7 +1,8 @@
 #include "surface.h"
 
-surface_t::surface_t(const polar_t &a, const polar_t &b, const polar_t &c)
-	: a{ a }
+surface_t::surface_t(const unsigned long long &ID, const polar_t &a, const polar_t &b, const polar_t &c)
+	: ID{ ID }
+	, a{ a }
 	, b{ b }
 	, c{ c }
 {
@@ -35,8 +36,8 @@ void surface_t::set_center()
 
 const biome_t surface_t::get_biome() const
 {
-	int _height = CLAMP(height * 6.0f, 0.0f, 5.0f);
-	int _aridity = CLAMP(aridity * 5.0f + foehn, 0.0f, 6.0f);
+	int _height = CLAMP((int)(height * 6.0f), 0, 5);
+	int _aridity = CLAMP((int)(aridity * 7.0f + foehn - 0.25f), 0, 6);
 	return biome_map[_height][6 - _aridity];
 }
 

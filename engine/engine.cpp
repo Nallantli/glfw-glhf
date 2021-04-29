@@ -5,6 +5,8 @@
 #include <glm/mat3x3.hpp>
 #include <comdef.h>
 #endif
+#include <fstream>
+#include <bits/stdc++.h>
 
 enum Mode
 {
@@ -427,6 +429,22 @@ void engine::user_input()
 				}
 			case SDL_KEYDOWN:
 				switch (evnt.key.keysym.scancode) {
+					case SDL_SCANCODE_O: {
+						std::cout << "FILENAME: ";
+						std::string fname;
+						std::getline(std::cin, fname);
+						serialize(fname);
+						std::cout << "SAVED.";
+						break;
+					}
+					case SDL_SCANCODE_I: {
+						std::cout << "FILENAME: ";
+						std::string fname;
+						std::getline(std::cin, fname);
+						load_file(fname);
+						std::cout << "LOADED.";
+						break;
+					}
 					case SDL_SCANCODE_1:
 						mode = MODE_LANDMASS;
 						break;
@@ -441,9 +459,6 @@ void engine::user_input()
 						break;
 					case SDL_SCANCODE_TAB:
 						projection = (projection_t)((projection + 1) % 2);
-						break;
-					case SDL_SCANCODE_ESCAPE:
-						_windowState = windowState::EXIT;
 						break;
 					default:
 						break;
@@ -539,4 +554,88 @@ void engine::fps_counter()
 	}
 
 	currentFrame++;
+}
+
+void engine::serialize(const std::string &filename)
+{
+	std::ofstream file(filename);
+	for (auto &s : _set) {
+		file << s->ID << "\t" << s->type << "\t" << s->height << "\t" << s->aridity << "\t" << s->foehn << "\t" << s->a[0] << "\t" << s->a[1] << "\t" << s->b[0] << "\t" << s->b[1] << "\t" << s->c[0] << "\t" << s->c[1];
+		for (auto &n : s->neighbors){
+			file << "\t" << n->ID;
+		}
+		file << "\n";
+	}
+	file.close();
+}
+
+void engine::load_file(const std::string &filename)
+{
+	for (auto &e : _set)
+		delete e;
+	for (auto &e : landmasses)
+		delete e;
+	_set.clear();
+	landmasses.clear();
+
+	std::vector<std::pair<surface_t*, std::vector<std::string>>> parsed;
+
+	std::ifstream file(filename);
+	std::string line;
+	while (std::getline(file, line)) {
+		std::vector<std::string> data_set;
+		std::stringstream data(line);
+		std::string token;
+		while (getline(data, token, '\t')){
+			data_set.push_back(token);
+		}
+
+		polar_t a(
+			std::stof(data_set[5]),
+			std::stof(data_set[6])
+		);
+		polar_t b(
+			std::stof(data_set[7]),
+			std::stof(data_set[8])
+		);
+		polar_t c(
+			std::stof(data_set[9]),
+			std::stof(data_set[10])
+		);
+
+		surface_t * s = new surface_t(
+			std::stoull(data_set[0]),
+			a, b, c
+		);
+
+		s->type = (surface_t::surface_type)std::stoi(data_set[1]);
+		s->height = std::stof(data_set[2]);
+		s->aridity = std::stof(data_set[3]);
+		s->foehn = std::stof(data_set[4]);
+
+		data_set.erase(data_set.begin(), data_set.begin() + 11);
+
+		parsed.push_back({s, data_set});
+	}
+
+	for (auto &e : parsed) {
+		for (auto &n : e.second) {
+			e.first->neighbors.push_back(parsed[std::stoull(n)].first);
+		}
+		_set.push_back(e.first);
+	}
+
+	for (auto &s : _set) {
+		if (s->landmass == NULL) {
+			landmass_t *l = new landmass_t{
+				(float)rand() / (float)RAND_MAX,
+				(float)rand() / (float)RAND_MAX,
+				(float)rand() / (float)RAND_MAX
+			};
+			s->landmass = l;
+			landmasses.push_back(l);
+			l->members.push_back(s);
+			make_landmasses(s);
+		}
+	}
 }

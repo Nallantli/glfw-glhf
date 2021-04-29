@@ -53,6 +53,9 @@ private:
     void engine_loop();
     void fps_counter();
 
+    void serialize(const std::string &filename);
+    void load_file(const std::string &filename);
+
     SDL_Window *_window;
     SDL_GLContext glContext;
     double _screenWidth;
