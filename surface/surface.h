@@ -27,9 +27,9 @@ struct surface_t
 		FACE_INLAND_LAKE,
 	} type = FACE_WATER;
 
-	float height = 0;
-	float aridity = 0;
-	float foehn = 0;
+	double height = 0;
+	double aridity = 0;
+	double foehn = 0;
 
 	std::vector<surface_t *> neighbors;
 
@@ -50,6 +50,6 @@ private:
 
 struct landmass_t
 {
-	float r, g, b;
+	double r, g, b;
 	std::vector<surface_t *> members;
 };

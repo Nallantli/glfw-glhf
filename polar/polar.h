@@ -9,8 +9,8 @@ private:
 	glm::vec2 coords;
 public:
 	polar_t();
-	polar_t(const float &, const float &);
-	const float operator[](const size_t &) const;
+	polar_t(const double &, const double &);
+	const double operator[](const size_t &) const;
 	const bool operator==(const polar_t &) const;
 	const bool operator!=(const polar_t &) const;
 	const bool operator<(const polar_t &) const;

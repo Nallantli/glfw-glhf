@@ -11,17 +11,17 @@
 
 #define MAX(a, b) (a > b ? a : b)
 #define MIN(a, b) (a < b ? a : b)
-#define DCOS(x) ((float)std::cos(M_PI * x / 180.0f))
-#define DSIN(x) ((float)std::sin(M_PI * x / 180.0f))
-#define RAD(x) ((float)(M_PI / 180.0f) * x)
+#define DCOS(x) ((double)std::cos(M_PI * x / 180.0))
+#define DSIN(x) ((double)std::sin(M_PI * x / 180.0))
+#define RAD(x) ((double)(M_PI / 180.0) * x)
 #define CLAMP(n, lower, upper) (n > upper ? upper : (n < lower ? lower : n))
 
 struct point3_t
 {
 	glm::vec3 coords;
 	point3_t();
-	point3_t(const float &, const float &, const float &);
+	point3_t(const double &, const double &, const double &);
 	point3_t(const glm::vec3 &);
-	point3_t(const polar_t &, const float &);
-	const float operator[](const size_t &) const;
+	point3_t(const polar_t &, const double &);
+	const double operator[](const size_t &) const;
 };

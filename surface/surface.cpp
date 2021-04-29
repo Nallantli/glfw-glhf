@@ -26,18 +26,18 @@ const bool surface_t::operator==(const surface_t &f)
 
 void surface_t::set_center()
 {
-	point3_t ca(a, 1.0f);
-	point3_t cb(b, 1.0f);
-	point3_t cc(c, 1.0f);
-	c_center = point3_t((ca[0] + cb[0] + cc[0]) / 3.0f, (ca[1] + cb[1] + cc[1]) / 3.0f, (ca[2] + cb[2] + cc[2]) / 3.0f);
-	float r = std::sqrt(c_center[0] * c_center[0] + c_center[1] * c_center[1] + c_center[2] * c_center[2]);
-	s_center = polar_t(180.0f * std::atan2(c_center[1], c_center[0]) / M_PI + 180.0f, 180.0f * std::asin(c_center[2] / r) / M_PI + 90.0f);
+	point3_t ca(a, 1.0);
+	point3_t cb(b, 1.0);
+	point3_t cc(c, 1.0);
+	c_center = point3_t((ca[0] + cb[0] + cc[0]) / 3.0, (ca[1] + cb[1] + cc[1]) / 3.0, (ca[2] + cb[2] + cc[2]) / 3.0);
+	double r = std::sqrt(c_center[0] * c_center[0] + c_center[1] * c_center[1] + c_center[2] * c_center[2]);
+	s_center = polar_t(180.0 * std::atan2(c_center[1], c_center[0]) / M_PI + 180.0, 180.0 * std::asin(c_center[2] / r) / M_PI + 90.0);
 }
 
 const biome_t surface_t::get_biome() const
 {
-	int _height = CLAMP((int)(height * 6.0f), 0, 5);
-	int _aridity = CLAMP((int)(aridity * 7.0f + foehn - 0.25f), 0, 6);
+	int _height = CLAMP((int)(height * 6.0), 0, 5);
+	int _aridity = CLAMP((int)(aridity * 7.0 + foehn - 0.25), 0, 6);
 	return biome_map[_height][6 - _aridity];
 }
 

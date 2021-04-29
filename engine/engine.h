@@ -28,11 +28,11 @@ enum class windowState
 
 struct camera
 {
-    float yaw;
-    float pit;
+    double yaw;
+    double pit;
     glm::mat2x3 rot;
 
-    camera(const float &yaw, const float &pit, const float &dist);
+    camera(const double &yaw, const double &pit, const double &dist);
 };
 
 class engine
@@ -58,18 +58,18 @@ private:
 
     SDL_Window *_window;
     SDL_GLContext glContext;
-    double _screenWidth;
-    double _screenHeight;
-    float _resRatio;
+    int _screenWidth;
+    int _screenHeight;
+    double _resRatio;
     std::map<int, bool> _KEYS;
     std::vector<surface_t *> _set;
     std::vector<landmass_t *> landmasses;
     camera *_cam;
     windowState _windowState;
     surface_t *_selected;
-    float _frameTime;
-    float _fps;
-    float _fpsMax;
+    double _frameTime;
+    double _fps;
+    double _fpsMax;
 
     enum projection_t
     {

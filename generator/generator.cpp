@@ -8,12 +8,12 @@
 #include "../quickhull/QuickHull.hpp"
 #include "../perlin/perlin.hpp"
 
-const float scale(const float &pit)
+const double scale(const double &pit)
 {
-	return 1.0 / std::sin((M_PI * pit) / 180.0f);
+	return 1.0 / std::sin((M_PI * pit) / 180.0);
 }
 
-const float true_dist(const surface_t *a, const surface_t *b)
+const double true_dist(const surface_t *a, const surface_t *b)
 {
 	point3_t cca = a->get_center_c();
 	point3_t ccb = b->get_center_c();
@@ -74,16 +74,16 @@ std::vector<surface_t *> get_water_extent(surface_t *f, const std::vector<surfac
 	return closed;
 }
 
-std::pair<surface_t *, float> find_nearest_land(surface_t *f, const std::vector<surface_t *> &faces)
+std::pair<surface_t *, double> find_nearest_land(surface_t *f, const std::vector<surface_t *> &faces)
 {
 	if (f->type == surface_t::FACE_LAND)
 		return { f, 0 };
 	surface_t *min = NULL;
-	float d;
+	double d;
 	for (auto &s : faces) {
 		if (s->type != surface_t::FACE_LAND)
 			continue;
-		float t = true_dist(f, s);
+		double t = true_dist(f, s);
 		if (min == NULL || t < d) {
 			d = t;
 			min = s;
@@ -92,16 +92,16 @@ std::pair<surface_t *, float> find_nearest_land(surface_t *f, const std::vector<
 	return { min, d };
 }
 
-std::pair<surface_t *, float> find_nearest_ocean(surface_t *f, const std::vector<surface_t *> &faces)
+std::pair<surface_t *, double> find_nearest_ocean(surface_t *f, const std::vector<surface_t *> &faces)
 {
 	if (f->type == surface_t::FACE_WATER)
 		return { f, 0 };
 	surface_t *min = NULL;
-	float d;
+	double d;
 	for (auto &s : faces) {
 		if (s->type != surface_t::FACE_WATER)
 			continue;
-		float t = true_dist(f, s);
+		double t = true_dist(f, s);
 		if (min == NULL || t < d) {
 			d = t;
 			min = s;
@@ -149,7 +149,7 @@ bool borders_ocean(const surface_t *f)
 	return false;
 }
 
-bool sees_ocean(const float &basin_height, surface_t *curr, std::vector<surface_t *> &explored)
+bool sees_ocean(const double &basin_height, surface_t *curr, std::vector<surface_t *> &explored)
 {
 	if (curr->type == surface_t::FACE_OCEAN)
 		return true;
@@ -162,16 +162,16 @@ bool sees_ocean(const float &basin_height, surface_t *curr, std::vector<surface_
 	return false;
 }
 
-std::pair<surface_t *, float> find_nearest_lake(surface_t *f, const std::vector<surface_t *> &faces)
+std::pair<surface_t *, double> find_nearest_lake(surface_t *f, const std::vector<surface_t *> &faces)
 {
 	if (f->type == surface_t::FACE_INLAND_LAKE)
 		return { f, 0 };
 	surface_t *min = NULL;
-	float d;
+	double d;
 	for (auto &s : faces) {
 		if (s->type != surface_t::FACE_INLAND_LAKE)
 			continue;
-		float t = true_dist(f, s);
+		double t = true_dist(f, s);
 		if (min == NULL || t < d) {
 			d = t;
 			min = s;
@@ -180,7 +180,7 @@ std::pair<surface_t *, float> find_nearest_lake(surface_t *f, const std::vector<
 	return { min, d };
 }
 
-void stagnate_lake(const float &basin_height, surface_t *curr)
+void stagnate_lake(const double &basin_height, surface_t *curr)
 {
 	curr->type = surface_t::FACE_STAGNANT;
 	for (auto &n : curr->neighbors) {
@@ -247,7 +247,7 @@ bool iterate_rivers(const std::vector<surface_t *> &faces)
 	return true;
 }
 
-void propagate_wind_east(surface_t *f, float p_factor, const float &start_y, std::vector<surface_t *> &explored)
+void propagate_wind_east(surface_t *f, double p_factor, const double &start_y, std::vector<surface_t *> &explored)
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
@@ -261,7 +261,7 @@ void propagate_wind_east(surface_t *f, float p_factor, const float &start_y, std
 			) {
 			propagate_wind_east(
 				n,
-				p_factor * MAX(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0f) + 1.0f),
+				p_factor * MAX(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0) + 1.0),
 				start_y,
 				explored
 			);
@@ -269,7 +269,7 @@ void propagate_wind_east(surface_t *f, float p_factor, const float &start_y, std
 	}
 }
 
-void propagate_wind_west(surface_t *f, float p_factor, const float &start_y, std::vector<surface_t *> &explored)
+void propagate_wind_west(surface_t *f, double p_factor, const double &start_y, std::vector<surface_t *> &explored)
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
@@ -283,7 +283,7 @@ void propagate_wind_west(surface_t *f, float p_factor, const float &start_y, std
 			) {
 			propagate_wind_west(
 				n,
-				p_factor * MAX(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0f) + 1.0f),
+				p_factor * MAX(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0) + 1.0),
 				start_y,
 				explored
 			);
@@ -295,9 +295,9 @@ void set_foehn(const std::vector<surface_t *> &set)
 {
 	for (auto &f : set) {
 		if (f->type == surface_t::FACE_LAND) {
-			float w_factor = CLAMP(std::pow(DSIN(3.0f * (f->get_center()[1] - 90.0f)), 2) / DCOS(3.0f * (f->get_center()[1] - 90.0f)), -1, 1) / 2.0f;
-			float h_factor = f->height;
-			float p_factor = w_factor * h_factor;
+			double w_factor = CLAMP(std::pow(DSIN(3.0 * (f->get_center()[1] - 90.0)), 2) / DCOS(3.0 * (f->get_center()[1] - 90.0)), -1, 1) / 2.0;
+			double h_factor = f->height;
+			double p_factor = w_factor * h_factor;
 			std::vector<surface_t *> explored;
 			if (p_factor > 0) {
 				propagate_wind_east(f, p_factor, f->get_center()[1], explored);
@@ -323,12 +323,12 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	perlin p(SEED);
 	std::vector<polar_t> ps;
 
-	float size = (float)FACE_SIZE;
+	double size = (double)FACE_SIZE;
 
 	for (int i = size; i <= 180 - size; i += size) {
-		for (float j = size; j < 360;) {
-			float x = j + ((float)rand() / (float)RAND_MAX) * (size / 2.0f);
-			float y = (float)i + ((float)rand() / (float)RAND_MAX) * (size / 2.0f);
+		for (double j = size; j < 360;) {
+			double x = j + ((double)rand() / (double)RAND_MAX) * (size / 2.0);
+			double y = (double)i + ((double)rand() / (double)RAND_MAX) * (size / 2.0);
 			ps.push_back(polar_t(x, y));
 			j += scale(i) * size;
 		}
@@ -337,8 +337,8 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	ps.push_back(polar_t(0, 0));
 	ps.push_back(polar_t(0, 180));
 
-	quickhull::QuickHull<float> qh;
-	std::vector<quickhull::Vector3<float>> qhpoints;
+	quickhull::QuickHull<double> qh;
+	std::vector<quickhull::Vector3<double>> qhpoints;
 
 	for (auto &p : ps) {
 		point3_t c(p, 1);
@@ -366,9 +366,9 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	begin = std::chrono::steady_clock::now();
 
 	for (auto &v : vertexBuffer) {
-		float r = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+		double r = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 		translated_vertices.push_back(
-			polar_t(180.0f * std::atan2(v.y, v.x) / M_PI + 180.0f, 180.0f * std::asin(v.z / r) / M_PI + 90.0f)
+			polar_t(180.0 * std::atan2(v.y, v.x) / M_PI + 180.0, 180.0 * std::asin(v.z / r) / M_PI + 90.0)
 		);
 	}
 
@@ -452,7 +452,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	begin = std::chrono::steady_clock::now();
 	for (auto i = 0; i < 16; i++) {
 		auto origin = set[rand() % set.size()];
-		float size = ((float)rand() / (float)RAND_MAX) * 0.4f + 0.1f;
+		double size = ((double)rand() / (double)RAND_MAX) * 0.4 + 0.1;
 		for (auto &e : set) {
 			if (true_dist(origin, e) < size)
 				iterate_land(e, ISLAND_BRANCHING_SIZE);
@@ -468,14 +468,14 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	for (auto &f : set) {
 		if (f->type != surface_t::FACE_LAND)
 			continue;
-		std::pair<surface_t *, float> n = find_nearest_ocean(f, set);
+		std::pair<surface_t *, double> n = find_nearest_ocean(f, set);
 		point3_t cc = f->get_center_c();
-		float pm =
-			p.get(p.get((cc[0] + 1.0f) / 32.0f, (cc[1] + 1.0f) / 32.0f, 2.0f, 4), (cc[2] + 1.0f) / 32.0f, 2.0f, 4) +
-			p.get(p.get((cc[0] + 1.0f) / 16.0f, (cc[1] + 1.0f) / 16.0f, 4.0f, 4), (cc[2] + 1.0f) / 16.0f, 4.0f, 4) +
-			p.get(p.get((cc[0] + 1.0f) / 8.0f, (cc[1] + 1.0f) / 8.0f, 8.0f, 4), (cc[2] + 1.0f) / 8.0f, 8.0f, 4) +
-			p.get(p.get((cc[0] + 1.0f) / 4.0f, (cc[1] + 1.0f) / 4.0f, 16.0f, 4), (cc[2] + 1.0f) / 4.0f, 16.0f, 4);
-		f->height = (n.second * 1.8f + MAX(0, pm / 5.0f - 0.25f)) * HEIGHT_MULTIPLIER;
+		double pm =
+			p.get(p.get((cc[0] + 1.0) / 32.0, (cc[1] + 1.0) / 32.0, 2.0, 4), (cc[2] + 1.0) / 32.0, 2.0, 4) +
+			p.get(p.get((cc[0] + 1.0) / 16.0, (cc[1] + 1.0) / 16.0, 4.0, 4), (cc[2] + 1.0) / 16.0, 4.0, 4) +
+			p.get(p.get((cc[0] + 1.0) / 8.0, (cc[1] + 1.0) / 8.0, 8.0, 4), (cc[2] + 1.0) / 8.0, 8.0, 4) +
+			p.get(p.get((cc[0] + 1.0) / 4.0, (cc[1] + 1.0) / 4.0, 16.0, 4), (cc[2] + 1.0) / 4.0, 16.0, 4);
+		f->height = (n.second * 1.8 + MAX(0, pm / 5.0 - 0.25)) * HEIGHT_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
@@ -507,7 +507,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	std::cout << "Setting Springs...\n";
 	begin = std::chrono::steady_clock::now();
 	for (auto &f : set) {
-		if (f->type != surface_t::FACE_LAND || (f->height < 0.4f && f->height > 0.5f)) {
+		if (f->type != surface_t::FACE_LAND || (f->height < 0.4 && f->height > 0.5)) {
 			continue;
 		}
 		if (rand() % 64 == 0)
@@ -537,14 +537,14 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	for (auto &f : set) {
 		if (f->type != surface_t::FACE_LAND)
 			continue;
-		std::pair<surface_t *, float> n = find_nearest_lake(f, set);
+		std::pair<surface_t *, double> n = find_nearest_lake(f, set);
 		point3_t cc = f->get_center_c();
-		float pm =
-			p.get(p.get((cc[0] + 101.0f) / 32.0f, (cc[1] + 101.0f) / 32.0f, 2.0f, 4), (cc[2] + 101.0f) / 32.0f, 2.0f, 4) +
-			p.get(p.get((cc[0] + 101.0f) / 16.0f, (cc[1] + 101.0f) / 16.0f, 4.0f, 4), (cc[2] + 101.0f) / 16.0f, 4.0f, 4) +
-			p.get(p.get((cc[0] + 101.0f) / 8.0f, (cc[1] + 101.0f) / 8.0f, 8.0f, 4), (cc[2] + 101.0f) / 8.0f, 8.0f, 4) +
-			p.get(p.get((cc[0] + 101.0f) / 4.0f, (cc[1] + 101.0f) / 4.0f, 16.0f, 4), (cc[2] + 101.0f) / 4.0f, 16.0f, 4);
-		f->aridity = (n.second * 1.8f + MAX(0, pm / 5.0f - 0.25f)) * ARIDITY_MULTIPLIER;
+		double pm =
+			p.get(p.get((cc[0] + 101.0) / 32.0, (cc[1] + 101.0) / 32.0, 2.0, 4), (cc[2] + 101.0) / 32.0, 2.0, 4) +
+			p.get(p.get((cc[0] + 101.0) / 16.0, (cc[1] + 101.0) / 16.0, 4.0, 4), (cc[2] + 101.0) / 16.0, 4.0, 4) +
+			p.get(p.get((cc[0] + 101.0) / 8.0, (cc[1] + 101.0) / 8.0, 8.0, 4), (cc[2] + 101.0) / 8.0, 8.0, 4) +
+			p.get(p.get((cc[0] + 101.0) / 4.0, (cc[1] + 101.0) / 4.0, 16.0, 4), (cc[2] + 101.0) / 4.0, 16.0, 4);
+		f->aridity = (n.second * 1.8 + MAX(0, pm / 5.0 - 0.25)) * ARIDITY_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
@@ -564,9 +564,9 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	for (auto &s : set) {
 		if (s->landmass == NULL) {
 			landmass_t *l = new landmass_t{
-				(float)rand() / (float)RAND_MAX,
-				(float)rand() / (float)RAND_MAX,
-				(float)rand() / (float)RAND_MAX
+				(double)rand() / (double)RAND_MAX,
+				(double)rand() / (double)RAND_MAX,
+				(double)rand() / (double)RAND_MAX
 			};
 			s->landmass = l;
 			landmasses.push_back(l);
@@ -586,15 +586,15 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	std::cout << "Done.\n";
 }
 
-surface_t *find_closest(const std::vector<surface_t *> &faces, const float &yaw, const float &pit)
+surface_t *find_closest(const std::vector<surface_t *> &faces, const double &yaw, const double &pit)
 {
-	float d = 100.0f;
+	double d = 100.0;
 	surface_t *curr = NULL;
 
 	for (auto &f : faces) {
 		auto center = f->get_center();
 
-		float t = std::sqrt(std::pow(center[0] - yaw, 2) + std::pow(center[1] - pit, 2));
+		double t = std::sqrt(std::pow(center[0] - yaw, 2) + std::pow(center[1] - pit, 2));
 		if (t < d) {
 			curr = f;
 			d = t;

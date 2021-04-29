@@ -4,11 +4,11 @@ polar_t::polar_t()
 	: coords{ 0, 0 }
 {}
 
-polar_t::polar_t(const float &yaw, const float &pit)
+polar_t::polar_t(const double &yaw, const double &pit)
 	: coords{ yaw, pit }
 {}
 
-const float polar_t::operator[](const size_t &i) const
+const double polar_t::operator[](const size_t &i) const
 {
 	return coords[i];
 }
