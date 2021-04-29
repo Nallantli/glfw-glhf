@@ -102,8 +102,8 @@ void engine::init_engine()
 	SDL_DisplayMode DM;
 	if(0 == SDL_GetCurrentDisplayMode(0, &DM))
 	{
-		_screenWidth = DM.h / 1.2;
-		_screenHeight = DM.h / 1.2;
+		_screenWidth = DM.w * 0.8;
+		_screenHeight = DM.w * 0.4;
 		_resRatio = (double)_screenWidth / (double)_screenHeight;
 	}
 	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
