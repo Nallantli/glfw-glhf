@@ -6,6 +6,7 @@
 #include <comdef.h>
 #endif
 #include <fstream>
+#include <glm/gtx/string_cast.hpp>
 #include <bits/stdc++.h>
 
 enum Mode
@@ -54,11 +55,14 @@ surface_t *get_face_from_point(const polar_t &p, std::vector<surface_t *> &set)
 	return curr;
 }
 
-camera::camera(const double &yaw, const double &pit, const double &dist) : yaw{ yaw }, pit{ pit }
-{
-	rot[0][0] = dist;
-	rot[1][1] = dist;
-}
+camera::camera(const double &yaw, const double &pit, const double &dist)
+	: yaw{ yaw }
+	, pit{ pit }
+	, rot{
+		{dist, 0, 0},
+		{0, dist, 0}
+	}
+{}
 
 engine::engine(const int &seed)
 	: _seed(seed)
@@ -434,7 +438,7 @@ void engine::user_input()
 						std::string fname;
 						std::getline(std::cin, fname);
 						serialize(fname);
-						std::cout << "SAVED.";
+						std::cout << "SAVED.\n";
 						break;
 					}
 					case SDL_SCANCODE_I: {
@@ -442,7 +446,7 @@ void engine::user_input()
 						std::string fname;
 						std::getline(std::cin, fname);
 						load_file(fname);
-						std::cout << "LOADED.";
+						std::cout << "LOADED.\n";
 						break;
 					}
 					case SDL_SCANCODE_1:
@@ -459,6 +463,9 @@ void engine::user_input()
 						break;
 					case SDL_SCANCODE_TAB:
 						projection = (projection_t)((projection + 1) % 2);
+						break;
+					case SDL_SCANCODE_R:
+						std::cout << glm::to_string(_cam->rot) << "\n";
 						break;
 					default:
 						break;
