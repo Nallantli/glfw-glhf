@@ -507,7 +507,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	std::cout << "Setting Springs...\n";
 	begin = std::chrono::steady_clock::now();
 	for (auto &f : set) {
-		if (f->type != surface_t::FACE_LAND || (f->height < 0.5f && f->height > 0.6f)) {
+		if (f->type != surface_t::FACE_LAND || (f->height < 0.4f && f->height > 0.5f)) {
 			continue;
 		}
 		if (rand() % 64 == 0)
