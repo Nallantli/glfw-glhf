@@ -79,7 +79,7 @@ engine::engine(const int &seed)
 	_screenWidth = 1600;
 	_screenHeight = 900;
 	_resRatio = (double)_screenWidth / (double)_screenHeight;
-	_cam = new camera(270, 90, 1);
+	_cam = new camera(270, 90, .8);
 	_windowState = windowState::RUN;
 	_fpsMax = 120;
 }
@@ -95,11 +95,15 @@ void engine::run()
 void engine::init_engine()
 {
 	srand(_seed);
+	generate_world(_set, landmasses, _seed);
+	std::cout << "World generated with seed: " << _seed << std::endl;
+
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_DisplayMode DM;
 	std::cout << SDL_GetCurrentDisplayMode(0, &DM);
-	_screenWidth = DM.w / 1.2;
+	_screenWidth = DM.h / 1.2;
 	_screenHeight = DM.h / 1.2;
+	_resRatio = (double)_screenWidth / (double)_screenHeight;
 	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (_window == nullptr) {
 		std::cerr << "SDL_window could not be created.";
@@ -120,8 +124,6 @@ void engine::init_engine()
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	generate_world(_set, landmasses, _seed);
-	std::cout << "World generated with seed: " << _seed << std::endl;
 	engine_loop();
 }
 
