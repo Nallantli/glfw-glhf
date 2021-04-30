@@ -5,8 +5,8 @@ CC=$(GCC) -Wall $(CV) -Os
 
 LIBS=-lglfw3 -lopengl32 -lglew32 -lmingw32 -lSDL2main -lSDL2
 
-gen.exe: main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o shader.o
-	$(CC) -o $@ main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o shader.o $(LIBS)
+gen.exe: main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o shader.o SimplexNoise.o
+	$(CC) -o $@ main.o engine.o point3.o generator.o polar.o surface.o QuickHull.o shader.o SimplexNoise.o $(LIBS)
 
 main.o: main.cpp
 	$(CC) -o $@ main.cpp -c $(LIBS)
@@ -31,3 +31,6 @@ shader.o: shader/shader.cpp
 
 QuickHull.o: quickhull/QuickHull.cpp
 	$(CC) -o $@ quickhull/QuickHull.cpp -c $(LIBS)
+
+SimplexNoise.o: SimplexNoise/SimplexNoise.cpp
+	$(CC) -o $@ SimplexNoise/SimplexNoise.cpp -c $(LIBS)

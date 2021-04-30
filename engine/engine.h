@@ -46,7 +46,6 @@ private:
     void init_engine();
     void draw_secant_line(const polar_t &a, const polar_t &b);
     void draw_shape(const surface_t *s);
-    void fill_shape(const surface_t *s);
     std::vector<std::string> split(const std::string &s, char delimiter);
     void render_world();
     void user_input();

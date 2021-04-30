@@ -53,3 +53,8 @@ struct landmass_t
 	double r, g, b;
 	std::vector<surface_t *> members;
 };
+
+inline double true_dist(const surface_t *a, const surface_t *b)
+{
+	return std::acos(glm::dot(a->get_center_c().coords, b->get_center_c().coords));
+}

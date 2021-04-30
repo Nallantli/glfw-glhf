@@ -36,8 +36,8 @@ void surface_t::set_center()
 
 const biome_t surface_t::get_biome() const
 {
-	int _height = CLAMP((int)(height * 6.0), 0, 5);
-	int _aridity = CLAMP((int)(aridity * 7.0 + foehn - 0.25), 0, 6);
+	int _height = CLAMP<int>(height * 6.0, 0, 5);
+	int _aridity = CLAMP<int>(aridity * 7.0 + foehn - 0.25, 0, 6);
 	return biome_map[_height][6 - _aridity];
 }
 

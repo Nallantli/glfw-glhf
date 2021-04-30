@@ -3,9 +3,10 @@
 /* -------- OPTIONS --------- */
 
 #define HEIGHT_MULTIPLIER		1.0
-#define ARIDITY_MULTIPLIER		1.0
+#define ARIDITY_MULTIPLIER		1.5
 #define INLAND_LAKE_SIZE		64
-#define ISLAND_BRANCHING_SIZE	32
+#define ISLAND_SEED_COUNT		16
+#define ISLAND_BRANCHING_SIZE	16
 #define FACE_SIZE				2
 
 /* -------------------------- */
@@ -14,12 +15,15 @@
 
 #include "../surface/surface.h"
 
+constexpr inline double scale(const double &pit)
+{
+	return 1.0 / std::sin((M_PI * pit) / 180.0);
+}
+
 bool borders_ocean(const surface_t *);
 bool iterate_rivers(const std::vector<surface_t *> &);
 bool sees_ocean(const double &, surface_t *, std::vector<surface_t *> &);
 const bool does_share_side(const surface_t *, const surface_t *);
-const double scale(const double &);
-const double true_dist(const surface_t *, const surface_t *);
 surface_t *find_closest(const std::vector<surface_t *> &, const double &, const double &);
 surface_t *get_highest_neighbor(surface_t *);
 surface_t *get_lowest_neighbor(surface_t *);

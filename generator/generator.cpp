@@ -6,20 +6,7 @@
 #include <map>
 
 #include "../quickhull/QuickHull.hpp"
-#include "../perlin/perlin.hpp"
-
-const double scale(const double &pit)
-{
-	return 1.0 / std::sin((M_PI * pit) / 180.0);
-}
-
-const double true_dist(const surface_t *a, const surface_t *b)
-{
-	point3_t cca = a->get_center_c();
-	point3_t ccb = b->get_center_c();
-	auto x = glm::dot(cca.coords, ccb.coords);
-	return std::acos(x);
-}
+#include "../SimplexNoise/SimplexNoise.h"
 
 const bool does_share_side(const surface_t *a, const surface_t *b)
 {
@@ -251,17 +238,17 @@ void propagate_wind_east(surface_t *f, double p_factor, const double &start_y, s
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
-	p_factor -= 0.1;
+	p_factor -= 0.025;
 	if (p_factor < 0)
 		return;
 	for (auto &n : f->neighbors) {
 		if (
 			((n->get_center()[0] > f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) <= 10) || (n->get_center()[0] < f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) > 10))
-			&& n->height <= f->height && n->type == surface_t::FACE_LAND && std::find(explored.begin(), explored.end(), n) == explored.end()
+			&& n->height < f->height && n->type != surface_t::FACE_INLAND_LAKE && std::find(explored.begin(), explored.end(), n) == explored.end()
 			) {
 			propagate_wind_east(
 				n,
-				p_factor * MAX(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0) + 1.0),
+				p_factor * MAX<double>(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0) + 1.0),
 				start_y,
 				explored
 			);
@@ -273,17 +260,17 @@ void propagate_wind_west(surface_t *f, double p_factor, const double &start_y, s
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
-	p_factor -= 0.1;
+	p_factor -= 0.025;
 	if (p_factor < 0)
 		return;
 	for (auto &n : f->neighbors) {
 		if (
 			((n->get_center()[0] < f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) <= 10) || (n->get_center()[0] > f->get_center()[0] && std::abs(n->get_center()[0] - f->get_center()[0]) > 10))
-			&& n->height <= f->height && n->type == surface_t::FACE_LAND && std::find(explored.begin(), explored.end(), n) == explored.end()
+			&& n->height < f->height && n->type != surface_t::FACE_INLAND_LAKE && std::find(explored.begin(), explored.end(), n) == explored.end()
 			) {
 			propagate_wind_west(
 				n,
-				p_factor * MAX(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0) + 1.0),
+				p_factor * MAX<double>(0, -std::sqrt(std::abs(n->get_center()[1] - start_y) / 10.0) + 1.0),
 				start_y,
 				explored
 			);
@@ -295,8 +282,8 @@ void set_foehn(const std::vector<surface_t *> &set)
 {
 	for (auto &f : set) {
 		if (f->type == surface_t::FACE_LAND) {
-			double w_factor = CLAMP(std::pow(DSIN(3.0 * (f->get_center()[1] - 90.0)), 2) / DCOS(3.0 * (f->get_center()[1] - 90.0)), -1, 1) / 2.0;
-			double h_factor = f->height;
+			double w_factor = CLAMP<double>(std::pow(DSIN(3.0 * (f->get_center()[1] - 90.0)), 2) / DCOS(3.0 * (f->get_center()[1] - 90.0)), -1, 1) / 2.0;
+			double h_factor = std::pow(f->height, 1.25) * 0.75;
 			double p_factor = w_factor * h_factor;
 			std::vector<surface_t *> explored;
 			if (p_factor > 0) {
@@ -320,7 +307,7 @@ void make_landmasses(surface_t *curr)
 
 void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &landmasses, const int &SEED)
 {
-	perlin p(SEED);
+	int noise_offset = rand();
 	std::vector<polar_t> ps;
 
 	double size = (double)FACE_SIZE;
@@ -450,7 +437,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 
 	std::cout << "Setting Islands...\n";
 	begin = std::chrono::steady_clock::now();
-	for (auto i = 0; i < 16; i++) {
+	for (auto i = 0; i < ISLAND_SEED_COUNT; i++) {
 		auto origin = set[rand() % set.size()];
 		double size = ((double)rand() / (double)RAND_MAX) * 0.4 + 0.1;
 		for (auto &e : set) {
@@ -471,11 +458,11 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		std::pair<surface_t *, double> n = find_nearest_ocean(f, set);
 		point3_t cc = f->get_center_c();
 		double pm =
-			p.get(p.get((cc[0] + 1.0) / 32.0, (cc[1] + 1.0) / 32.0, 2.0, 4), (cc[2] + 1.0) / 32.0, 2.0, 4) +
-			p.get(p.get((cc[0] + 1.0) / 16.0, (cc[1] + 1.0) / 16.0, 4.0, 4), (cc[2] + 1.0) / 16.0, 4.0, 4) +
-			p.get(p.get((cc[0] + 1.0) / 8.0, (cc[1] + 1.0) / 8.0, 8.0, 4), (cc[2] + 1.0) / 8.0, 8.0, 4) +
-			p.get(p.get((cc[0] + 1.0) / 4.0, (cc[1] + 1.0) / 4.0, 16.0, 4), (cc[2] + 1.0) / 4.0, 16.0, 4);
-		f->height = (n.second * 1.8 + MAX(0, pm / 5.0 - 0.25)) * HEIGHT_MULTIPLIER;
+			SimplexNoise::noise(noise_offset + cc[0], cc[1], cc[2]) * 0.5 +
+			SimplexNoise::noise(noise_offset + cc[0] * 2.0, cc[1] * 2.0, cc[2] * 2.0) * 0.25 +
+			SimplexNoise::noise(noise_offset + cc[0] * 4.0, cc[1] * 4.0, cc[2] * 4.0) * 0.15 +
+			SimplexNoise::noise(noise_offset + cc[0] * 8.0, cc[1] * 8.0, cc[2] * 8.0) * 0.1;
+		f->height = MAX<double>(0.0, n.second * 2.0 + pm / 2.0) * HEIGHT_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
@@ -540,11 +527,11 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		std::pair<surface_t *, double> n = find_nearest_lake(f, set);
 		point3_t cc = f->get_center_c();
 		double pm =
-			p.get(p.get((cc[0] + 101.0) / 32.0, (cc[1] + 101.0) / 32.0, 2.0, 4), (cc[2] + 101.0) / 32.0, 2.0, 4) +
-			p.get(p.get((cc[0] + 101.0) / 16.0, (cc[1] + 101.0) / 16.0, 4.0, 4), (cc[2] + 101.0) / 16.0, 4.0, 4) +
-			p.get(p.get((cc[0] + 101.0) / 8.0, (cc[1] + 101.0) / 8.0, 8.0, 4), (cc[2] + 101.0) / 8.0, 8.0, 4) +
-			p.get(p.get((cc[0] + 101.0) / 4.0, (cc[1] + 101.0) / 4.0, 16.0, 4), (cc[2] + 101.0) / 4.0, 16.0, 4);
-		f->aridity = (n.second * 1.8 + MAX(0, pm / 5.0 - 0.25)) * ARIDITY_MULTIPLIER;
+			SimplexNoise::noise(noise_offset + cc[0] + 100, cc[1], cc[2]) * 0.5 +
+			SimplexNoise::noise(noise_offset + cc[0] * 2.0 + 100, cc[1] * 2.0, cc[2] * 2.0) * 0.25 +
+			SimplexNoise::noise(noise_offset + cc[0] * 4.0 + 100, cc[1] * 4.0, cc[2] * 4.0) * 0.15 +
+			SimplexNoise::noise(noise_offset + cc[0] * 8.0 + 100, cc[1] * 8.0, cc[2] * 8.0) * 0.1;
+		f->aridity = MAX<double>(0.0, n.second * 2.0 + pm / 2.0) * ARIDITY_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "

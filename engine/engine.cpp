@@ -9,12 +9,27 @@
 #include <glm/gtx/string_cast.hpp>
 #include <bits/stdc++.h>
 
+/*static std::string load_shader(const std::string &filename)
+{
+	std::ifstream file(filename);
+	std::string line;
+	std::string content;
+
+	while (std::getline(file, line)) {
+		content += line + "\n";
+	}
+
+	return content;
+}*/
+
 enum Mode
 {
 	MODE_LANDMASS,
 	MODE_FLAT,
-	MODE_DATA,
-	MODE_FOEHN
+	MODE_HEIGHT,
+	MODE_ARIDITY,
+	MODE_FOEHN,
+	MODE_DATA
 };
 
 Mode mode = MODE_FLAT;
@@ -61,7 +76,7 @@ camera::camera(const double &yaw, const double &pit, const double &dist)
 	, rot{
 		{dist, 0, 0},
 		{0, dist, 0}
-	}
+}
 {}
 
 engine::engine(const int &seed)
@@ -100,8 +115,7 @@ void engine::init_engine()
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 	SDL_DisplayMode DM;
-	if(0 == SDL_GetCurrentDisplayMode(0, &DM))
-	{
+	if (0 == SDL_GetCurrentDisplayMode(0, &DM)) {
 		_screenWidth = DM.w * 0.8;
 		_screenHeight = DM.w * 0.4;
 		_resRatio = (double)_screenWidth / (double)_screenHeight;
@@ -129,15 +143,9 @@ void engine::init_engine()
 	engine_loop();
 }
 
+/* -- UNUSED -- */
 void engine::draw_secant_line(const polar_t &a, const polar_t &b)
 {
-	/*double z_a = flatten(a, _cam, r_a);
-		double z_b = flatten(b, _cam, r_b);
-
-		double dp = r_a.x * r_b.x + r_a.y * r_b.y + z_a * z_b;
-
-		double theta = std::acos(dp / (_cam->dist * _cam->dist));*/
-
 	double length = std::sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
 
 	double dist_yaw = b[0] - a[0];
@@ -163,6 +171,7 @@ void engine::draw_secant_line(const polar_t &a, const polar_t &b)
 
 void engine::draw_shape(const surface_t *s)
 {
+	// generate transformed lon+lat coords into 3d cartesian points, then project
 	auto r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
 	auto t1 = _cam->rot * r1;
 	auto r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
@@ -170,45 +179,27 @@ void engine::draw_shape(const surface_t *s)
 	auto r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
 	auto t3 = _cam->rot * r3;
 
+	// don't draw if opposite side of sphere
 	if (r1[2] < 0 || r2[2] < 0 || r3[2] < 0)
 		return;
 
-	glBegin(GL_LINE_STRIP);
 	glVertex2d(t1[0] / _resRatio, t1[1]);
 	glVertex2d(t2[0] / _resRatio, t2[1]);
 	glVertex2d(t3[0] / _resRatio, t3[1]);
-	glVertex2d(t1[0] / _resRatio, t1[1]);
-	glEnd();
-}
-
-void engine::fill_shape(const surface_t *s)
-{
-	auto r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
-	auto t1 = _cam->rot * r1;
-	auto r2 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->b, 1).coords);
-	auto t2 = _cam->rot * r2;
-	auto r3 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->c, 1).coords);
-	auto t3 = _cam->rot * r3;
-
-	if (r1[2] < 0 || r2[2] < 0 || r3[2] < 0)
-		return;
-
-	glBegin(GL_TRIANGLES);
-	glVertex2d(t1[0] / _resRatio, t1[1]);
-	glVertex2d(t2[0] / _resRatio, t2[1]);
-	glVertex2d(t3[0] / _resRatio, t3[1]);
-	glEnd();
 }
 
 void engine::render_world()
 {
+	// clear screen
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glColor3d(0.0, 0.0, 0.5);
+	// set ocean color
+	glColor3d(0.1, 0.1, 0.4);
 
 	switch (projection) {
 		case PROJ_MERC:
 		{
+			// draw ocean rectangle
 			glBegin(GL_QUADS);
 			glVertex2d(-1, -1);
 			glVertex2d(1, -1);
@@ -224,17 +215,24 @@ void engine::render_world()
 						break;
 					case MODE_FLAT: {
 						auto biome = s->get_biome();
-						glColor3d(biome.r, biome.g, biome.b);
+						glColor3ub(biome.r, biome.g, biome.b);
 						break;
 					}
+					case MODE_ARIDITY:
+						glColor3d(s->aridity, 0.0, 0.0);
+						break;
+					case MODE_HEIGHT:
+						glColor3d(0.0, s->height, 0.0);
+						break;
 					case MODE_FOEHN:
-						glColor3d(s->foehn, s->foehn, s->foehn);
+						glColor3d(0.0, 0.0, s->foehn);
 						break;
 					case MODE_DATA:
-						glColor3d(s->aridity, s->height, 0.0);
+						glColor3d(s->aridity, s->height, s->foehn);
 						break;
 				}
 				glBegin(GL_TRIANGLES);
+				// if the points are clockwise (determinant > 0), the triangle does not need to be translated
 				if (s->b[0] * s->a[1] + s->c[0] * s->b[1] + s->a[0] * s->c[1] > s->a[0] * s->b[1] + s->b[0] * s->c[1] + s->c[0] * s->a[1]) {
 					glVertex2d(s->a[0] / 180.0 - 1.0, -s->a[1] / 90.0 + 1.0);
 					glVertex2d(s->b[0] / 180.0 - 1.0, -s->b[1] / 90.0 + 1.0);
@@ -345,6 +343,7 @@ void engine::render_world()
 				);
 			}
 			glEnd(); //END
+			glBegin(GL_TRIANGLES);
 			for (auto &s : _set) {
 				if (s->type != surface_t::FACE_LAND)
 					continue;
@@ -354,18 +353,25 @@ void engine::render_world()
 						break;
 					case MODE_FLAT: {
 						auto biome = s->get_biome();
-						glColor3d(biome.r, biome.g, biome.b);
+						glColor3ub(biome.r, biome.g, biome.b);
 						break;
 					}
+					case MODE_ARIDITY:
+						glColor3d(s->aridity, 0.0, 0.0);
+						break;
+					case MODE_HEIGHT:
+						glColor3d(0.0, s->height, 0.0);
+						break;
 					case MODE_FOEHN:
-						glColor3d(s->foehn, s->foehn, s->foehn);
+						glColor3d(0.0, 0.0, s->foehn);
 						break;
 					case MODE_DATA:
-						glColor3d(s->aridity, s->height, 0.0);
+						glColor3d(s->aridity, s->height, s->foehn);
 						break;
 				}
-				fill_shape(s);
+				draw_shape(s);
 			}
+			glEnd();
 
 			double m_x = (((double)mouse_x / (double)_screenWidth) * 2.0 - 1.0) * _resRatio / _cam->rot[0][0];
 			double m_y = (((double)mouse_y / (double)_screenHeight) * -2.0 + 1.0) / _cam->rot[0][0];
@@ -382,7 +388,9 @@ void engine::render_world()
 			_selected = get_face_from_point(mp, _set);
 			if (_selected != NULL) {
 				glColor3d(1.0, 0.0, 0.0);
+				glBegin(GL_LINE_LOOP);
 				draw_shape(_selected);
+				glEnd();
 			}
 			break;
 		}
@@ -403,10 +411,10 @@ void engine::user_input()
 		_cam->yaw = std::fmod(_cam->yaw + 0.002 + 360.0, 360);
 	}
 	if (keystate[SDL_SCANCODE_W] || keystate[SDL_SCANCODE_UP]) {
-		_cam->pit = CLAMP(_cam->pit - 0.002, 0, 180);
+		_cam->pit = CLAMP<double>(_cam->pit - 0.002, 0, 180);
 	}
 	if (keystate[SDL_SCANCODE_S] || keystate[SDL_SCANCODE_DOWN]) {
-		_cam->pit = CLAMP(_cam->pit + 0.002, 0, 180);
+		_cam->pit = CLAMP<double>(_cam->pit + 0.002, 0, 180);
 	}
 	if (keystate[SDL_SCANCODE_Q]) {
 		_cam->rot[0][0] += 0.00005;
@@ -460,10 +468,16 @@ void engine::user_input()
 						mode = MODE_FLAT;
 						break;
 					case SDL_SCANCODE_3:
-						mode = MODE_DATA;
+						mode = MODE_HEIGHT;
 						break;
 					case SDL_SCANCODE_4:
+						mode = MODE_ARIDITY;
+						break;
+					case SDL_SCANCODE_5:
 						mode = MODE_FOEHN;
+						break;
+					case SDL_SCANCODE_6:
+						mode = MODE_DATA;
 						break;
 					case SDL_SCANCODE_TAB:
 						projection = (projection_t)((projection + 1) % 2);
@@ -572,7 +586,7 @@ void engine::serialize(const std::string &filename)
 	std::ofstream file(filename);
 	for (auto &s : _set) {
 		file << s->ID << "\t" << s->type << "\t" << s->height << "\t" << s->aridity << "\t" << s->foehn << "\t" << s->a[0] << "\t" << s->a[1] << "\t" << s->b[0] << "\t" << s->b[1] << "\t" << s->c[0] << "\t" << s->c[1];
-		for (auto &n : s->neighbors){
+		for (auto &n : s->neighbors) {
 			file << "\t" << n->ID;
 		}
 		file << "\n";
@@ -589,7 +603,7 @@ void engine::load_file(const std::string &filename)
 	_set.clear();
 	landmasses.clear();
 
-	std::vector<std::pair<surface_t*, std::vector<std::string>>> parsed;
+	std::vector<std::pair<surface_t *, std::vector<std::string>>> parsed;
 
 	std::ifstream file(filename);
 	std::string line;
@@ -597,7 +611,7 @@ void engine::load_file(const std::string &filename)
 		std::vector<std::string> data_set;
 		std::stringstream data(line);
 		std::string token;
-		while (getline(data, token, '\t')){
+		while (getline(data, token, '\t')) {
 			data_set.push_back(token);
 		}
 
@@ -614,7 +628,7 @@ void engine::load_file(const std::string &filename)
 			std::stod(data_set[10])
 		);
 
-		surface_t * s = new surface_t(
+		surface_t *s = new surface_t(
 			std::stoull(data_set[0]),
 			a, b, c
 		);
@@ -626,7 +640,7 @@ void engine::load_file(const std::string &filename)
 
 		data_set.erase(data_set.begin(), data_set.begin() + 11);
 
-		parsed.push_back({s, data_set});
+		parsed.push_back({ s, data_set });
 	}
 
 	for (auto &e : parsed) {
