@@ -12,7 +12,8 @@ struct biome_t
 		FORESTED,
 		RAIN_FOREST,
 		TUNDRA,
-		POLAR
+		POLAR,
+		WATER
 	} const type;
 	const unsigned char r, g, b;
 	const char *name;
@@ -51,6 +52,9 @@ static const biome_t ARCTIC_TUNDRA(biome_t::TUNDRA, 249, 255, 249, "Arctic Tundr
 static const biome_t ICE_CAPS(biome_t::POLAR, 231, 252, 255, "Ice Caps");
 static const biome_t COLD_DESERT(biome_t::POLAR, 240, 239, 236, "Cold Desert");
 static const biome_t POLAR_DESERT(biome_t::POLAR, 246, 240, 242, "Polar Desert");
+static const biome_t RIVER(biome_t::WATER, 26, 26, 102, "River");
+static const biome_t LAKE(biome_t::WATER, 26, 26, 102, "Lake");
+static const biome_t OCEAN(biome_t::WATER, 26, 26, 102, "Ocean");
 
 static const biome_t biome_map[6][7] = {
 	{BEACH,				BEACH,				SAVANNA,			SAVANNA,		SEASONAL_FOREST,	MARSH,				SWAMP},

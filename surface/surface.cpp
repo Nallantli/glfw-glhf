@@ -36,9 +36,16 @@ void surface_t::set_center()
 
 const biome_t surface_t::get_biome() const
 {
-	int _height = CLAMP<int>(height * 6.0, 0, 5);
-	int _aridity = CLAMP<int>(aridity * 7.0 + foehn - 0.1, 0, 6);
-	return biome_map[_height][6 - _aridity];
+	switch (type) {
+		case FACE_INLAND_LAKE:
+			return RIVER;
+		case FACE_STAGNANT:
+			return LAKE;
+		default:
+			int _height = CLAMP<int>(height * 6.0, 0, 5);
+			int _aridity = CLAMP<int>(aridity * 7.0 + foehn - 0.1, 0, 6);
+			return biome_map[_height][6 - _aridity];
+	}
 }
 
 const bool surface_t::operator<(const surface_t &f)

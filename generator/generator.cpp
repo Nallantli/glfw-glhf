@@ -8,6 +8,8 @@
 #include "../quickhull/QuickHull.hpp"
 #include "../SimplexNoise/SimplexNoise.h"
 
+static section_t sections[36][18];
+
 const bool does_share_side(const surface_t *a, const surface_t *b)
 {
 	std::vector<polar_t> vertices = {
@@ -83,16 +85,32 @@ std::pair<surface_t *, double> find_nearest_ocean(surface_t *f, const std::vecto
 {
 	if (f->type == surface_t::FACE_WATER)
 		return { f, 0 };
+
+	std::vector<section_t> curr = { sections[(size_t)(f->get_center()[0] / 10.0)][(size_t)(f->get_center()[1] / 10.0)] };
+	std::vector<section_t> explored;
+
+	bool check_flag = false;
 	surface_t *min = NULL;
-	double d;
-	for (auto &s : faces) {
-		if (s->type != surface_t::FACE_WATER)
-			continue;
-		double t = true_dist(f, s);
-		if (min == NULL || t < d) {
-			d = t;
-			min = s;
+	double d = INFINITY;
+
+	while (!curr.empty()) {
+		for (auto &sub : curr) {
+			for (auto &s : sub.members) {
+				if (s->type != surface_t::FACE_WATER)
+					continue;
+				double t = true_dist(f, s);
+				if (min == NULL || t < d) {
+					d = t;
+					min = s;
+				}
+			}
+			explored.push_back(sub);
 		}
+		if (min != NULL && check_flag)
+			return { min, d };
+		else if (min != NULL)
+			check_flag = true;
+		curr = expand(curr, explored, sections);
 	}
 	return { min, d };
 }
@@ -104,8 +122,8 @@ surface_t *get_lowest_neighbor(surface_t *f)
 		if (n->type != surface_t::FACE_LAND)
 			continue;
 		if (lowest == NULL) {
-			if (n->height < f->height)
-				lowest = n;
+			//if (n->height < f->height)
+			lowest = n;
 		} else if (n->height < lowest->height)
 			lowest = n;
 	}
@@ -119,8 +137,8 @@ surface_t *get_highest_neighbor(surface_t *f)
 		if (n->type != surface_t::FACE_LAND)
 			continue;
 		if (highest == NULL) {
-			if (n->height > f->height)
-				highest = n;
+			//if (n->height > f->height)
+			highest = n;
 		} else if (n->height > highest->height)
 			highest = n;
 	}
@@ -143,7 +161,7 @@ bool sees_ocean(const double &basin_height, surface_t *curr, std::vector<surface
 
 	explored.push_back(curr);
 	for (auto &n : curr->neighbors) {
-		if (std::find(explored.begin(), explored.end(), n) == explored.end() && n->height < basin_height && sees_ocean(basin_height, n, explored))
+		if (std::find(explored.begin(), explored.end(), n) == explored.end() && n->height <= basin_height && sees_ocean(basin_height, n, explored))
 			return true;
 	}
 	return false;
@@ -153,16 +171,32 @@ std::pair<surface_t *, double> find_nearest_lake(surface_t *f, const std::vector
 {
 	if (f->type == surface_t::FACE_INLAND_LAKE)
 		return { f, 0 };
+
+	std::vector<section_t> curr = { sections[(size_t)(f->get_center()[0] / 10.0)][(size_t)(f->get_center()[1] / 10.0)] };
+	std::vector<section_t> explored;
+
+	bool check_flag = false;
 	surface_t *min = NULL;
-	double d;
-	for (auto &s : faces) {
-		if (s->type != surface_t::FACE_INLAND_LAKE)
-			continue;
-		double t = true_dist(f, s);
-		if (min == NULL || t < d) {
-			d = t;
-			min = s;
+	double d = INFINITY;
+
+	while (!curr.empty()) {
+		for (auto &sub : curr) {
+			for (auto &s : sub.members) {
+				if (s->type != surface_t::FACE_INLAND_LAKE)
+					continue;
+				double t = true_dist(f, s);
+				if (min == NULL || t < d) {
+					d = t;
+					min = s;
+				}
+			}
+			explored.push_back(sub);
 		}
+		if (min != NULL && check_flag)
+			return { min, d };
+		else if (min != NULL)
+			check_flag = true;
+		curr = expand(curr, explored, sections);
 	}
 	return { min, d };
 }
@@ -171,7 +205,7 @@ void stagnate_lake(const double &basin_height, surface_t *curr)
 {
 	curr->type = surface_t::FACE_STAGNANT;
 	for (auto &n : curr->neighbors) {
-		if (n->height < basin_height && n->type == surface_t::FACE_LAND)
+		if (n->height <= basin_height && n->type == surface_t::FACE_LAND)
 			stagnate_lake(basin_height, n);
 	}
 }
@@ -223,8 +257,10 @@ bool iterate_rivers(const std::vector<surface_t *> &faces)
 						if (out != NULL)
 							out->type = surface_t::FACE_FLOWING;
 					}
-				} else if (ln->height < s->height) {
+				} else if (ln->height <= s->height) {
 					ln->type = surface_t::FACE_FLOWING;
+				} else {
+					s->type = surface_t::FACE_INLAND_LAKE;
 				}
 			} else {
 				s->type = surface_t::FACE_INLAND_LAKE;
@@ -305,8 +341,42 @@ void make_landmasses(surface_t *curr)
 	}
 }
 
+const std::vector<section_t> expand(const std::vector<section_t> &input, const std::vector<section_t> &explored, section_t sections[36][18])
+{
+	std::vector<section_t> output;
+	for (auto &s : input) {
+		for (int j = -1; j <= 1; j++) {
+			int lat = MAX<int>(0, MIN<int>(17, s.lat + j));
+			int sc = MAX<int>(0, MIN<int>(18, scale(lat * 10)));
+			for (int i = -sc; i <= sc; i++) {
+				if (i == 0 && j == 0)
+					continue;
+				int lon = (s.lon + i + 36) % 36;
+				if (std::find(output.begin(), output.end(), sections[lon][lat]) == output.end()
+					&& std::find(explored.begin(), explored.end(), sections[lon][lat]) == explored.end())
+					output.push_back(sections[lon][lat]);
+			}
+		}
+	}
+
+	return output;
+}
+
+
+const bool section_t::operator==(const section_t &s) const
+{
+	return lon == s.lon && lat == s.lat;
+}
+
 void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &landmasses, const int &SEED)
 {
+	for (int i = 0; i < 36; i++) {
+		for (int j = 0; j < 18; j++) {
+			sections[i][j].lon = i;
+			sections[i][j].lat = j;
+		}
+	}
+
 	int noise_offset = rand();
 	std::vector<polar_t> ps;
 
@@ -409,6 +479,9 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		else
 			edge_map[{s->a, s->c}].push_back(s);
 		set.push_back(s);
+
+		sections[(size_t)(s->get_center()[0] / 10.0f)][(size_t)(s->get_center()[1] / 10.0f)].members.push_back(s);
+
 		count++;
 	}
 
@@ -497,7 +570,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		if (f->type != surface_t::FACE_LAND || (f->height < 0.4 && f->height > 0.5)) {
 			continue;
 		}
-		if (rand() % 64 == 0)
+		if (rand() % 128 == 0)
 			f->type = surface_t::FACE_FLOWING;
 	}
 	end = std::chrono::steady_clock::now();

@@ -4,10 +4,10 @@
 
 #define HEIGHT_MULTIPLIER		1.0
 #define ARIDITY_MULTIPLIER		1.5
-#define INLAND_LAKE_SIZE		64
-#define ISLAND_SEED_COUNT		16
-#define ISLAND_BRANCHING_SIZE	16
-#define FACE_SIZE				2
+#define INLAND_LAKE_SIZE		128
+#define ISLAND_SEED_COUNT		32
+#define ISLAND_BRANCHING_SIZE	32
+#define FACE_SIZE				1
 
 /* -------------------------- */
 
@@ -15,11 +15,19 @@
 
 #include "../surface/surface.h"
 
+struct section_t
+{
+	int lon, lat;
+	std::vector<surface_t *> members;
+	const bool operator==(const section_t &s) const;
+};
+
 constexpr inline double scale(const double &pit)
 {
 	return 1.0 / std::sin((M_PI * pit) / 180.0);
 }
 
+const std::vector<section_t> expand(const std::vector<section_t> &input, const std::vector<section_t> &explored, section_t sections[36][18]);
 bool borders_ocean(const surface_t *);
 bool iterate_rivers(const std::vector<surface_t *> &);
 bool sees_ocean(const double &, surface_t *, std::vector<surface_t *> &);

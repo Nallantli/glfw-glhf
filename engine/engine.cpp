@@ -194,7 +194,7 @@ void engine::render_world()
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	// set ocean color
-	glColor3d(0.1, 0.1, 0.4);
+	glColor3ub(26, 26, 102);
 
 	switch (projection) {
 		case PROJ_MERC:
