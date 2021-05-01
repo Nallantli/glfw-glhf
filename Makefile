@@ -1,7 +1,7 @@
 GCC=g++
 
 CV=--std=c++17
-CC=$(GCC) -Wall $(CV) -Os
+CC=$(GCC) -Wall $(CV) -O3
 
 LIBS=-lglfw3 -lopengl32 -lglew32 -lmingw32 -lSDL2main -lSDL2
 
