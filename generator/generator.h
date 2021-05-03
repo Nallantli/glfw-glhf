@@ -3,10 +3,10 @@
 /* -------- OPTIONS --------- */
 
 #define HEIGHT_MULTIPLIER		1.0
-#define ARIDITY_MULTIPLIER		1.75
+#define ARIDITY_MULTIPLIER		2.0
 #define INLAND_LAKE_SIZE		64
-#define ISLAND_SEED_COUNT		8
-#define ISLAND_BRANCHING_SIZE	64
+#define ISLAND_SEED_COUNT		16
+#define ISLAND_BRANCHING_SIZE	32
 #define FACE_SIZE				1
 
 /* -------------------------- */
@@ -35,9 +35,7 @@ const bool does_share_side(const surface_t *, const surface_t *);
 surface_t *find_closest(const std::vector<surface_t *> &, const double &, const double &);
 surface_t *get_highest_neighbor(surface_t *);
 surface_t *get_lowest_neighbor(surface_t *);
-std::pair<surface_t *, double> find_nearest_lake(surface_t *, const std::vector<surface_t *> &);
-std::pair<surface_t *, double> find_nearest_land(surface_t *, const std::vector<surface_t *> &);
-std::pair<surface_t *, double> find_nearest_ocean(surface_t *, const std::vector<surface_t *> &);
+std::pair<surface_t *, double> find_nearest(surface_t *, const std::vector<surface_t *> &, const surface_t::surface_type &);
 std::vector<surface_t *> get_lake_edges(surface_t *, std::vector<surface_t *> &);
 std::vector<surface_t *> get_water_extent(surface_t *, const std::vector<surface_t *> &);
 void generate_world(std::vector<surface_t *> &, std::vector<landmass_t *> &, const int &);

@@ -63,27 +63,9 @@ std::vector<surface_t *> get_water_extent(surface_t *f, const std::vector<surfac
 	return closed;
 }
 
-std::pair<surface_t *, double> find_nearest_land(surface_t *f, const std::vector<surface_t *> &faces)
+std::pair<surface_t *, double> find_nearest(surface_t *f, const std::vector<surface_t *> &faces, const surface_t::surface_type &type)
 {
-	if (f->type == surface_t::FACE_LAND)
-		return { f, 0 };
-	surface_t *min = NULL;
-	double d;
-	for (auto &s : faces) {
-		if (s->type != surface_t::FACE_LAND)
-			continue;
-		double t = true_dist(f, s);
-		if (min == NULL || t < d) {
-			d = t;
-			min = s;
-		}
-	}
-	return { min, d };
-}
-
-std::pair<surface_t *, double> find_nearest_ocean(surface_t *f, const std::vector<surface_t *> &faces)
-{
-	if (f->type == surface_t::FACE_WATER)
+	if (f->type == type)
 		return { f, 0 };
 
 	std::vector<section_t> curr = { sections[(size_t)(f->get_center()[0] / 10.0)][(size_t)(f->get_center()[1] / 10.0)] };
@@ -96,7 +78,7 @@ std::pair<surface_t *, double> find_nearest_ocean(surface_t *f, const std::vecto
 	while (!curr.empty()) {
 		for (auto &sub : curr) {
 			for (auto &s : sub.members) {
-				if (s->type != surface_t::FACE_WATER)
+				if (s->type != type)
 					continue;
 				double t = true_dist(f, s);
 				if (min == NULL || t < d) {
@@ -165,40 +147,6 @@ bool sees_ocean(const double &basin_height, surface_t *curr, std::vector<surface
 			return true;
 	}
 	return false;
-}
-
-std::pair<surface_t *, double> find_nearest_lake(surface_t *f, const std::vector<surface_t *> &faces)
-{
-	if (f->type == surface_t::FACE_INLAND_LAKE)
-		return { f, 0 };
-
-	std::vector<section_t> curr = { sections[(size_t)(f->get_center()[0] / 10.0)][(size_t)(f->get_center()[1] / 10.0)] };
-	std::vector<section_t> explored;
-
-	bool check_flag = false;
-	surface_t *min = NULL;
-	double d = INFINITY;
-
-	while (!curr.empty()) {
-		for (auto &sub : curr) {
-			for (auto &s : sub.members) {
-				if (s->type != surface_t::FACE_INLAND_LAKE)
-					continue;
-				double t = true_dist(f, s);
-				if (min == NULL || t < d) {
-					d = t;
-					min = s;
-				}
-			}
-			explored.push_back(sub);
-		}
-		if (min != NULL && check_flag)
-			return { min, d };
-		else if (min != NULL)
-			check_flag = true;
-		curr = expand(curr, explored, sections);
-	}
-	return { min, d };
 }
 
 void stagnate_lake(const double &basin_height, surface_t *curr)
@@ -319,7 +267,7 @@ void set_foehn(const std::vector<surface_t *> &set)
 	for (auto &f : set) {
 		if (f->type == surface_t::FACE_LAND) {
 			double w_factor = CLAMP<double>(std::pow(DSIN(3.0 * (f->get_center()[1] - 90.0)), 2) / DCOS(3.0 * (f->get_center()[1] - 90.0)), -1, 1) / 2.0;
-			double h_factor = std::pow(f->height, 1.25) * 0.75;
+			double h_factor = std::pow(f->height, 1.25) * 1.0;
 			double p_factor = w_factor * h_factor;
 			std::vector<surface_t *> explored;
 			if (p_factor > 0) {
@@ -528,7 +476,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	for (auto &f : set) {
 		if (f->type != surface_t::FACE_LAND)
 			continue;
-		std::pair<surface_t *, double> n = find_nearest_ocean(f, set);
+		std::pair<surface_t *, double> n = find_nearest(f, set, surface_t::FACE_WATER);
 		point3_t cc = f->get_center_c();
 		double pm =
 			SimplexNoise::noise(noise_offset + cc[0], cc[1], cc[2]) * 0.5 +
@@ -550,7 +498,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 		auto water = get_water_extent(f, set);
 		if (water.size() < INLAND_LAKE_SIZE) {
 			for (auto &e : water) {
-				e->height = find_nearest_land(e, set).first->height;
+				e->height = find_nearest(e, set, surface_t::FACE_LAND).first->height;
 				e->type = surface_t::FACE_LAND;
 			}
 		} else {
@@ -597,7 +545,7 @@ void generate_world(std::vector<surface_t *> &set, std::vector<landmass_t *> &la
 	for (auto &f : set) {
 		if (f->type != surface_t::FACE_LAND)
 			continue;
-		std::pair<surface_t *, double> n = find_nearest_lake(f, set);
+		std::pair<surface_t *, double> n = find_nearest(f, set, surface_t::FACE_INLAND_LAKE);
 		point3_t cc = f->get_center_c();
 		double pm =
 			SimplexNoise::noise(noise_offset + cc[0] + 100, cc[1], cc[2]) * 0.5 +

@@ -219,13 +219,13 @@ void engine::render_world()
 						break;
 					}
 					case MODE_ARIDITY:
-						glColor3d(s->aridity, 0.0, 0.0);
+						glColor3d(s->aridity, MAX<double>(0.0, s->aridity - 1.0), MAX<double>(0.0, s->aridity - 2.0));
 						break;
 					case MODE_HEIGHT:
-						glColor3d(0.0, s->height, 0.0);
+						glColor3d(s->height, MAX<double>(0.0, s->height - 1.0), MAX<double>(0.0, s->height - 2.0));
 						break;
 					case MODE_FOEHN:
-						glColor3d(0.0, 0.0, s->foehn);
+						glColor3d(s->foehn, MAX<double>(0.0, s->foehn - 1.0), MAX<double>(0.0, s->foehn - 2.0));
 						break;
 					case MODE_DATA:
 						glColor3d(s->aridity, s->height, s->foehn);
@@ -357,13 +357,13 @@ void engine::render_world()
 						break;
 					}
 					case MODE_ARIDITY:
-						glColor3d(s->aridity, 0.0, 0.0);
+						glColor3d(s->aridity, MAX<double>(0.0, s->aridity - 1.0), MAX<double>(0.0, s->aridity - 2.0));
 						break;
 					case MODE_HEIGHT:
-						glColor3d(0.0, s->height, 0.0);
+						glColor3d(s->height, MAX<double>(0.0, s->height - 1.0), MAX<double>(0.0, s->height - 2.0));
 						break;
 					case MODE_FOEHN:
-						glColor3d(0.0, 0.0, s->foehn);
+						glColor3d(s->foehn, MAX<double>(0.0, s->foehn - 1.0), MAX<double>(0.0, s->foehn - 2.0));
 						break;
 					case MODE_DATA:
 						glColor3d(s->aridity, s->height, s->foehn);
