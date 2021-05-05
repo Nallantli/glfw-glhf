@@ -54,7 +54,7 @@ const glm::mat3 rot_y(const double &theta)
 	return m;
 }
 
-surface_t *get_face_from_point(const polar_t &p, std::vector<surface_t *> &set)
+surface_t *get_face_from_point(const polar_t &p, const std::vector<surface_t *> &set)
 {
 	surface_t *curr = NULL;
 	double dist = 100.0;
@@ -79,7 +79,7 @@ camera::camera(const double &yaw, const double &pit, const double &dist)
 }
 {}
 
-engine::engine(const int &seed)
+engine_t::engine_t(const int &seed)
 	: _seed(seed)
 {
 #ifdef _WIN32
@@ -99,18 +99,21 @@ engine::engine(const int &seed)
 	_fpsMax = 120;
 }
 
-engine::~engine()
-{}
+engine_t::~engine_t()
+{
+	delete world;
+	delete _cam;
+}
 
-void engine::run()
+void engine_t::run()
 {
 	init_engine();
 }
 
-void engine::init_engine()
+void engine_t::init_engine()
 {
 	srand(_seed);
-	generate_world(_set, landmasses, _seed);
+	world = new world_t(_seed);
 	std::cout << "World generated with seed: " << _seed << std::endl;
 
 	SDL_Init(SDL_INIT_EVERYTHING);
@@ -144,7 +147,7 @@ void engine::init_engine()
 }
 
 /* -- UNUSED -- */
-void engine::draw_secant_line(const polar_t &a, const polar_t &b)
+void engine_t::draw_secant_line(const polar_t &a, const polar_t &b)
 {
 	double length = std::sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]));
 
@@ -169,7 +172,7 @@ void engine::draw_secant_line(const polar_t &a, const polar_t &b)
 	glEnd();
 }
 
-void engine::draw_shape(const surface_t *s)
+void engine_t::draw_shape(const surface_t *s)
 {
 	// generate transformed lon+lat coords into 3d cartesian points, then project
 	auto r1 = rot_x(_cam->pit) * (rot_y(_cam->yaw) * point3_t(s->a, 1).coords);
@@ -188,7 +191,7 @@ void engine::draw_shape(const surface_t *s)
 	glVertex2d(t3[0] / _resRatio, t3[1]);
 }
 
-void engine::render_world()
+void engine_t::render_world()
 {
 	// clear screen
 	glClearDepth(1.0);
@@ -206,7 +209,7 @@ void engine::render_world()
 			glVertex2d(1, 1);
 			glVertex2d(-1, 1);
 			glEnd();
-			for (auto &s : _set) {
+			for (auto &s : world->get_faces()) {
 				if (s->type != surface_t::FACE_LAND)
 					continue;
 				switch (mode) {
@@ -219,13 +222,13 @@ void engine::render_world()
 						break;
 					}
 					case MODE_ARIDITY:
-						glColor3d(s->aridity, MAX<double>(0.0, s->aridity - 1.0), MAX<double>(0.0, s->aridity - 2.0));
+						glColor3d(s->aridity - 2.0, 1.0 - std::abs(s->aridity - 2.0), 1.0 - std::abs(s->aridity - 1.0));
 						break;
 					case MODE_HEIGHT:
-						glColor3d(s->height, MAX<double>(0.0, s->height - 1.0), MAX<double>(0.0, s->height - 2.0));
+						glColor3d(s->height - 2.0, 1.0 - std::abs(s->height - 2.0), 1.0 - std::abs(s->height - 1.0));
 						break;
 					case MODE_FOEHN:
-						glColor3d(s->foehn, MAX<double>(0.0, s->foehn - 1.0), MAX<double>(0.0, s->foehn - 2.0));
+						glColor3d(s->foehn - 2.0, 1.0 - std::abs(s->foehn - 2.0), 1.0 - std::abs(s->foehn - 1.0));
 						break;
 					case MODE_DATA:
 						glColor3d(s->aridity, s->height, s->foehn);
@@ -275,7 +278,7 @@ void engine::render_world()
 				m_y
 			);
 
-			_selected = get_face_from_point(mp, _set);
+			_selected = get_face_from_point(mp, world->get_faces());
 			if (_selected != NULL) {
 				glColor3d(1.0, 0.0, 0.0);
 				if (_selected->b[0] * _selected->a[1] + _selected->c[0] * _selected->b[1] + _selected->a[0] * _selected->c[1] > _selected->a[0] * _selected->b[1] + _selected->b[0] * _selected->c[1] + _selected->c[0] * _selected->a[1]) {
@@ -344,7 +347,7 @@ void engine::render_world()
 			}
 			glEnd(); //END
 			glBegin(GL_TRIANGLES);
-			for (auto &s : _set) {
+			for (auto &s : world->get_faces()) {
 				if (s->type != surface_t::FACE_LAND)
 					continue;
 				switch (mode) {
@@ -357,13 +360,13 @@ void engine::render_world()
 						break;
 					}
 					case MODE_ARIDITY:
-						glColor3d(s->aridity, MAX<double>(0.0, s->aridity - 1.0), MAX<double>(0.0, s->aridity - 2.0));
+						glColor3d(s->aridity - 2.0, 1.0 - std::abs(s->aridity - 2.0), 1.0 - std::abs(s->aridity - 1.0));
 						break;
 					case MODE_HEIGHT:
-						glColor3d(s->height, MAX<double>(0.0, s->height - 1.0), MAX<double>(0.0, s->height - 2.0));
+						glColor3d(s->height - 2.0, 1.0 - std::abs(s->height - 2.0), 1.0 - std::abs(s->height - 1.0));
 						break;
 					case MODE_FOEHN:
-						glColor3d(s->foehn, MAX<double>(0.0, s->foehn - 1.0), MAX<double>(0.0, s->foehn - 2.0));
+						glColor3d(s->foehn - 2.0, 1.0 - std::abs(s->foehn - 2.0), 1.0 - std::abs(s->foehn - 1.0));
 						break;
 					case MODE_DATA:
 						glColor3d(s->aridity, s->height, s->foehn);
@@ -385,7 +388,7 @@ void engine::render_world()
 				180.0 * std::asin(test[2] / r) / M_PI + 90.0
 			);
 
-			_selected = get_face_from_point(mp, _set);
+			_selected = get_face_from_point(mp, world->get_faces());
 			if (_selected != NULL) {
 				glColor3d(1.0, 0.0, 0.0);
 				glBegin(GL_LINE_LOOP);
@@ -399,7 +402,7 @@ void engine::render_world()
 	SDL_GL_SwapWindow(_window);
 }
 
-void engine::user_input()
+void engine_t::user_input()
 {
 	SDL_Event evnt;
 	const Uint8 *keystate = SDL_GetKeyboardState(NULL);
@@ -495,7 +498,7 @@ void engine::user_input()
 	}
 }
 
-void engine::engine_loop()
+void engine_t::engine_loop()
 {
 	//static int frameCount = 0;
 	static double accumulator = 0.0;
@@ -514,16 +517,6 @@ void engine::engine_loop()
 			user_input();
 			accumulator -= 1.0 / 10.0;
 		}
-
-		//regulate fps
-		/*
-		if (frameCount==30)
-		{
-			std::cout << _fps << std::endl;
-			frameCount = 0;
-		}
-		frameCount++;
-		*/
 		if (1000.0 / _fpsMax > frameTime) {
 			SDL_Delay((1000.0 / _fpsMax) - frameTime);
 		}
@@ -534,16 +527,9 @@ void engine::engine_loop()
 	SDL_GL_DeleteContext(glContext);
 	SDL_DestroyWindow(_window);
 	SDL_Quit();
-	delete _cam;
-	for (auto &e : _set)
-		delete e;
-	for (auto &e : landmasses)
-		delete e;
-	_set.clear();
-	landmasses.clear();
 }
 
-void engine::fps_counter()
+void engine_t::fps_counter()
 {
 	static const int SAMPLES_PER_FPS = 10;
 	static double frameTimes[SAMPLES_PER_FPS];
@@ -581,10 +567,10 @@ void engine::fps_counter()
 	currentFrame++;
 }
 
-void engine::serialize(const std::string &filename)
+void engine_t::serialize(const std::string &filename)
 {
 	std::ofstream file(filename);
-	for (auto &s : _set) {
+	for (auto &s : world->get_faces()) {
 		file << s->ID << "\t" << s->type << "\t" << s->height << "\t" << s->aridity << "\t" << s->foehn << "\t" << s->a[0] << "\t" << s->a[1] << "\t" << s->b[0] << "\t" << s->b[1] << "\t" << s->c[0] << "\t" << s->c[1];
 		for (auto &n : s->neighbors) {
 			file << "\t" << n->ID;
@@ -594,14 +580,9 @@ void engine::serialize(const std::string &filename)
 	file.close();
 }
 
-void engine::load_file(const std::string &filename)
+void engine_t::load_file(const std::string &filename)
 {
-	for (auto &e : _set)
-		delete e;
-	for (auto &e : landmasses)
-		delete e;
-	_set.clear();
-	landmasses.clear();
+	delete world;
 
 	std::vector<std::pair<surface_t *, std::vector<std::string>>> parsed;
 
@@ -643,6 +624,8 @@ void engine::load_file(const std::string &filename)
 		parsed.push_back({ s, data_set });
 	}
 
+	std::vector<surface_t *> _set;
+
 	for (auto &e : parsed) {
 		for (auto &n : e.second) {
 			e.first->neighbors.push_back(parsed[std::stoull(n)].first);
@@ -650,17 +633,5 @@ void engine::load_file(const std::string &filename)
 		_set.push_back(e.first);
 	}
 
-	for (auto &s : _set) {
-		if (s->landmass == NULL) {
-			landmass_t *l = new landmass_t{
-				(double)rand() / (double)RAND_MAX,
-				(double)rand() / (double)RAND_MAX,
-				(double)rand() / (double)RAND_MAX
-			};
-			s->landmass = l;
-			landmasses.push_back(l);
-			l->members.push_back(s);
-			make_landmasses(s);
-		}
-	}
+	world = new world_t(_set);
 }

@@ -33,7 +33,7 @@ struct surface_t
 
 	std::vector<surface_t *> neighbors;
 
-	landmass_t * landmass = NULL;
+	landmass_t *landmass = NULL;
 
 	surface_t(const unsigned long long &ID, const polar_t &, const polar_t &, const polar_t &);
 	const bool operator==(const surface_t &);
@@ -58,3 +58,9 @@ inline double true_dist(const surface_t *a, const surface_t *b)
 {
 	return std::acos(glm::dot(a->get_center_c().coords, b->get_center_c().coords));
 }
+
+const bool does_share_side(const surface_t *, const surface_t *);
+std::vector<surface_t *> get_highest_neighbors(surface_t *);
+std::vector<surface_t *> get_lowest_neighbors(surface_t *);
+bool borders_ocean(const surface_t *);
+bool sees_ocean(const double &, surface_t *, std::vector<surface_t *> &);

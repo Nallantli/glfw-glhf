@@ -19,7 +19,7 @@
 #include <fstream>
 #include <map>
 
-#include "../generator/generator.h"
+#include "../world/world.h"
 
 enum class windowState
 {
@@ -35,11 +35,11 @@ struct camera
     camera(const double &yaw, const double &pit, const double &dist);
 };
 
-class engine
+class engine_t
 {
 public:
-    engine(const int &seed);
-    ~engine();
+    engine_t(const int &seed);
+    ~engine_t();
     void run();
 
 private:
@@ -55,14 +55,14 @@ private:
     void serialize(const std::string &filename);
     void load_file(const std::string &filename);
 
+    world_t * world;
+
     SDL_Window *_window;
     SDL_GLContext glContext;
     int _screenWidth;
     int _screenHeight;
     double _resRatio;
     std::map<int, bool> _KEYS;
-    std::vector<surface_t *> _set;
-    std::vector<landmass_t *> landmasses;
     camera *_cam;
     windowState _windowState;
     surface_t *_selected;

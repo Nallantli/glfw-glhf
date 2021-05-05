@@ -1,4 +1,5 @@
 #include "surface.h"
+#include <algorithm>
 
 surface_t::surface_t(const unsigned long long &ID, const polar_t &a, const polar_t &b, const polar_t &c)
 	: ID{ ID }
@@ -51,4 +52,80 @@ const biome_t surface_t::get_biome() const
 const bool surface_t::operator<(const surface_t &f)
 {
 	return a < f.a || b < f.b || c < f.c;
+}
+
+const bool does_share_side(const surface_t *a, const surface_t *b)
+{
+	std::vector<polar_t> vertices = {
+		a->a,
+		a->b,
+		a->c,
+		b->a,
+		b->b,
+		b->c
+	};
+
+	if (std::count(vertices.begin(), vertices.end(), a->a) >= 2 && std::count(vertices.begin(), vertices.end(), a->b) >= 2)
+		return true;
+	if (std::count(vertices.begin(), vertices.end(), a->b) >= 2 && std::count(vertices.begin(), vertices.end(), a->c) >= 2)
+		return true;
+	if (std::count(vertices.begin(), vertices.end(), a->c) >= 2 && std::count(vertices.begin(), vertices.end(), a->a) >= 2)
+		return true;
+	return false;
+}
+
+std::vector<surface_t *> get_lowest_neighbors(surface_t *f)
+{
+	std::vector<surface_t *> lowest;
+	for (auto &n : f->neighbors) {
+		if (n->type != surface_t::FACE_LAND)
+			continue;
+		if (lowest.empty()) {
+			lowest = { n };
+		} else if (n->height < lowest[0]->height) {
+			lowest = { n };
+		} else if (n->height == lowest[0]->height) {
+			lowest.push_back(n);
+		}
+	}
+	return lowest;
+}
+
+std::vector<surface_t *> get_highest_neighbors(surface_t *f)
+{
+	std::vector<surface_t *> highest;
+	for (auto &n : f->neighbors) {
+		if (n->type != surface_t::FACE_LAND)
+			continue;
+		if (highest.empty()) {
+			highest = { n };
+		} else if (n->height > highest[0]->height) {
+			highest = { n };
+		} else if (n->height == highest[0]->height) {
+			highest.push_back(n);
+		}
+	}
+	return highest;
+}
+
+bool borders_ocean(const surface_t *f)
+{
+	for (auto &n : f->neighbors) {
+		if (n->type == surface_t::FACE_OCEAN)
+			return true;
+	}
+	return false;
+}
+
+bool sees_ocean(const double &basin_height, surface_t *curr, std::vector<surface_t *> &explored)
+{
+	if (curr->type == surface_t::FACE_OCEAN)
+		return true;
+
+	explored.push_back(curr);
+	for (auto &n : curr->neighbors) {
+		if (std::find(explored.begin(), explored.end(), n) == explored.end() && n->height <= basin_height && sees_ocean(basin_height, n, explored))
+			return true;
+	}
+	return false;
 }
