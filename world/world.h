@@ -3,7 +3,7 @@
 /* -------- OPTIONS --------- */
 
 #define HEIGHT_MULTIPLIER		1.0
-#define ARIDITY_MULTIPLIER		2.0
+#define ARIDITY_MULTIPLIER		1.0
 #define INLAND_LAKE_SIZE		64
 #define ISLAND_SEED_COUNT		16
 #define ISLAND_BRANCHING_SIZE	32
@@ -41,12 +41,12 @@ public:
 	bool iterate_rivers();
 	surface_t *find_closest(const double &, const double &);
 	std::pair<surface_t *, double> find_nearest(surface_t *, const surface_t::surface_type &);
-	std::vector<surface_t *> get_lake_edges(surface_t *, std::vector<surface_t *> &);
+	std::vector<surface_t *> get_lake_edges(surface_t *, std::vector<const surface_t *> &);
 	std::vector<surface_t *> get_water_extent(surface_t *);
 	void make_landmasses(surface_t *);
 	void iterate_land(surface_t *, int);
-	void propagate_wind_east(surface_t *, double, const double &, std::vector<surface_t *> &);
-	void propagate_wind_west(surface_t *, double, const double &, std::vector<surface_t *> &);
+	void propagate_wind_east(surface_t *, double, const double &, std::vector<const surface_t *> &);
+	void propagate_wind_west(surface_t *, double, const double &, std::vector<const surface_t *> &);
 	void set_foehn();
 	void stagnate_lake(const double &, surface_t *);
 	std::vector<surface_t *> get_faces() const;

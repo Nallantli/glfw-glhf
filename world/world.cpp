@@ -84,7 +84,7 @@ void world_t::stagnate_lake(const double &basin_height, surface_t *curr)
 	}
 }
 
-std::vector<surface_t *> world_t::get_lake_edges(surface_t *curr, std::vector<surface_t *> &explored)
+std::vector<surface_t *> world_t::get_lake_edges(surface_t *curr, std::vector<const surface_t *> &explored)
 {
 	explored.push_back(curr);
 	std::vector<surface_t *> edges;
@@ -115,24 +115,24 @@ bool world_t::iterate_rivers()
 		return false;
 
 	for (auto &s : rivers) {
-		if (borders_ocean(s)) {
+		if (s->borders_ocean()) {
 			s->type = surface_t::FACE_INLAND_LAKE;
 		} else {
-			auto lv = get_lowest_neighbors(s);
+			auto lv = s->get_lowest_neighbors();
 			if (!lv.empty()) {
 				surface_t *ln = NULL;
 				for (auto &e : lv) {
 					if (ln == NULL || find_nearest(e, surface_t::FACE_OCEAN).second < find_nearest(ln, surface_t::FACE_OCEAN).second)
 						ln = e;
 				}
-				std::vector<surface_t *> ex;
+				std::vector<const surface_t *> ex;
 				s->type = surface_t::FACE_INLAND_LAKE;
-				if (!sees_ocean(ln->height, ln, ex)) {
+				if (!ln->sees_ocean(ln->height, ex)) {
 					ex.clear();
 					stagnate_lake(ln->height, ln);
 					std::vector<surface_t *> possible = get_lake_edges(ln, ex);
 					for (auto &e : possible) {
-						auto hv = get_highest_neighbors(e);
+						auto hv = e->get_highest_neighbors();
 						if (!hv.empty()) {
 							surface_t *hn = NULL;
 							for (auto &e : hv) {
@@ -155,7 +155,7 @@ bool world_t::iterate_rivers()
 	return true;
 }
 
-void world_t::propagate_wind_east(surface_t *f, double p_factor, const double &start_y, std::vector<surface_t *> &explored)
+void world_t::propagate_wind_east(surface_t *f, double p_factor, const double &start_y, std::vector<const surface_t *> &explored)
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
@@ -177,7 +177,7 @@ void world_t::propagate_wind_east(surface_t *f, double p_factor, const double &s
 	}
 }
 
-void world_t::propagate_wind_west(surface_t *f, double p_factor, const double &start_y, std::vector<surface_t *> &explored)
+void world_t::propagate_wind_west(surface_t *f, double p_factor, const double &start_y, std::vector<const surface_t *> &explored)
 {
 	explored.push_back(f);
 	f->foehn += p_factor;
@@ -206,7 +206,7 @@ void world_t::set_foehn()
 			double w_factor = CLAMP<double>(std::pow(DSIN(3.0 * (f->get_center()[1] - 90.0)), 2) / DCOS(3.0 * (f->get_center()[1] - 90.0)), -1, 1) / 2.0;
 			double h_factor = std::pow(f->height, 1.25) * 1.0;
 			double p_factor = w_factor * h_factor;
-			std::vector<surface_t *> explored;
+			std::vector<const surface_t *> explored;
 			if (p_factor > 0) {
 				propagate_wind_east(f, p_factor, f->get_center()[1], explored);
 			} else {
@@ -420,7 +420,7 @@ world_t::world_t(const int &SEED)
 			SimplexNoise::noise(noise_offset + cc[0] * 2.0, cc[1] * 2.0, cc[2] * 2.0) * 0.25 +
 			SimplexNoise::noise(noise_offset + cc[0] * 4.0, cc[1] * 4.0, cc[2] * 4.0) * 0.15 +
 			SimplexNoise::noise(noise_offset + cc[0] * 8.0, cc[1] * 8.0, cc[2] * 8.0) * 0.1;
-		f->height = MAX<double>(0.0, n.second * 2.0 + pm / 2.0) * HEIGHT_MULTIPLIER;
+		f->height = MAX<double>(0.0, n.second * 2.0 + pm / 3.0) * HEIGHT_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "
@@ -489,7 +489,7 @@ world_t::world_t(const int &SEED)
 			SimplexNoise::noise(noise_offset + cc[0] * 2.0 + 100, cc[1] * 2.0, cc[2] * 2.0) * 0.25 +
 			SimplexNoise::noise(noise_offset + cc[0] * 4.0 + 100, cc[1] * 4.0, cc[2] * 4.0) * 0.15 +
 			SimplexNoise::noise(noise_offset + cc[0] * 8.0 + 100, cc[1] * 8.0, cc[2] * 8.0) * 0.1;
-		f->aridity = MAX<double>(0.0, n.second * 2.0 + pm / 2.0) * ARIDITY_MULTIPLIER;
+		f->aridity = MAX<double>(0.0, std::pow(n.second, 0.6) * 2.0 + pm / 2.0) * ARIDITY_MULTIPLIER;
 	}
 	end = std::chrono::steady_clock::now();
 	std::cout << "Elapsed: "

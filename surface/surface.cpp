@@ -54,30 +54,30 @@ const bool surface_t::operator<(const surface_t &f)
 	return a < f.a || b < f.b || c < f.c;
 }
 
-const bool does_share_side(const surface_t *a, const surface_t *b)
+const bool surface_t::does_share_side(const surface_t *b) const
 {
 	std::vector<polar_t> vertices = {
-		a->a,
-		a->b,
-		a->c,
+		this->a,
+		this->b,
+		this->c,
 		b->a,
 		b->b,
 		b->c
 	};
 
-	if (std::count(vertices.begin(), vertices.end(), a->a) >= 2 && std::count(vertices.begin(), vertices.end(), a->b) >= 2)
+	if (std::count(vertices.begin(), vertices.end(), this->a) >= 2 && std::count(vertices.begin(), vertices.end(), this->b) >= 2)
 		return true;
-	if (std::count(vertices.begin(), vertices.end(), a->b) >= 2 && std::count(vertices.begin(), vertices.end(), a->c) >= 2)
+	if (std::count(vertices.begin(), vertices.end(), this->b) >= 2 && std::count(vertices.begin(), vertices.end(), this->c) >= 2)
 		return true;
-	if (std::count(vertices.begin(), vertices.end(), a->c) >= 2 && std::count(vertices.begin(), vertices.end(), a->a) >= 2)
+	if (std::count(vertices.begin(), vertices.end(), this->c) >= 2 && std::count(vertices.begin(), vertices.end(), this->a) >= 2)
 		return true;
 	return false;
 }
 
-std::vector<surface_t *> get_lowest_neighbors(surface_t *f)
+std::vector<surface_t *> surface_t::get_lowest_neighbors() const
 {
 	std::vector<surface_t *> lowest;
-	for (auto &n : f->neighbors) {
+	for (auto &n : this->neighbors) {
 		if (n->type != surface_t::FACE_LAND)
 			continue;
 		if (lowest.empty()) {
@@ -91,10 +91,10 @@ std::vector<surface_t *> get_lowest_neighbors(surface_t *f)
 	return lowest;
 }
 
-std::vector<surface_t *> get_highest_neighbors(surface_t *f)
+std::vector<surface_t *> surface_t::get_highest_neighbors() const
 {
 	std::vector<surface_t *> highest;
-	for (auto &n : f->neighbors) {
+	for (auto &n : this->neighbors) {
 		if (n->type != surface_t::FACE_LAND)
 			continue;
 		if (highest.empty()) {
@@ -108,23 +108,23 @@ std::vector<surface_t *> get_highest_neighbors(surface_t *f)
 	return highest;
 }
 
-bool borders_ocean(const surface_t *f)
+bool surface_t::borders_ocean() const
 {
-	for (auto &n : f->neighbors) {
+	for (auto &n : neighbors) {
 		if (n->type == surface_t::FACE_OCEAN)
 			return true;
 	}
 	return false;
 }
 
-bool sees_ocean(const double &basin_height, surface_t *curr, std::vector<surface_t *> &explored)
+bool surface_t::sees_ocean(const double &basin_height, std::vector<const surface_t *> &explored) const
 {
-	if (curr->type == surface_t::FACE_OCEAN)
+	if (this->type == surface_t::FACE_OCEAN)
 		return true;
 
-	explored.push_back(curr);
-	for (auto &n : curr->neighbors) {
-		if (std::find(explored.begin(), explored.end(), n) == explored.end() && n->height <= basin_height && sees_ocean(basin_height, n, explored))
+	explored.push_back(this);
+	for (auto &n : this->neighbors) {
+		if (std::find(explored.begin(), explored.end(), n) == explored.end() && n->height <= basin_height && n->sees_ocean(basin_height, explored))
 			return true;
 	}
 	return false;
