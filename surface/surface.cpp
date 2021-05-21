@@ -42,6 +42,10 @@ const biome_t surface_t::get_biome() const
 			return RIVER;
 		case FACE_STAGNANT:
 			return LAKE;
+		case FACE_OCEAN:
+			return OCEAN;
+		case FACE_DEEP_OCEAN:
+			return DEEP_OCEAN;
 		default:
 			int _height = CLAMP<int>(height * 6.0, 0, 5);
 			int _aridity = CLAMP<int>(aridity * 7.0 + foehn - 0.1, 0, 6);

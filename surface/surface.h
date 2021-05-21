@@ -25,6 +25,7 @@ struct surface_t
 		FACE_FLOWING,
 		FACE_STAGNANT,
 		FACE_INLAND_LAKE,
+		FACE_DEEP_OCEAN
 	} type = FACE_WATER;
 
 	double height = 0;

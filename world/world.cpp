@@ -15,7 +15,7 @@ void world_t::iterate_land(surface_t *curr, int w)
 	curr->type = surface_t::FACE_LAND;
 	if (w > 0) {
 		for (auto &n : curr->neighbors) {
-			if (n->type == surface_t::FACE_WATER)
+			if (n->type == surface_t::FACE_WATER || n->type == surface_t::FACE_OCEAN || n->type == surface_t::FACE_DEEP_OCEAN)
 				iterate_land(n, w - 1);
 		}
 	}
@@ -408,6 +408,78 @@ world_t::world_t(const int &SEED)
 		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
 		<< "[us]" << std::endl;
 
+	std::cout << "Setting Deep Ocean Islands...\n";
+	std::vector<surface_t *> deep;
+	std::vector<surface_t *> deep2;
+	for (auto &f : faces) {
+		if (f->type != surface_t::FACE_WATER)
+			continue;
+		auto dist = find_nearest(f, surface_t::FACE_LAND);
+		point3_t cc = f->get_center_c();
+		double pm = SimplexNoise::noise(200 + noise_offset + cc[0] / 2.0, cc[1] / 2.0, cc[2] / 2.0);
+		double pm2 = SimplexNoise::noise(400 + noise_offset + cc[0] / 2.0, cc[1] / 2.0, cc[2] / 2.0);
+		if (dist.second > 0.2) {
+			if (pm > -0.1 && pm < 0.1) {
+				f->type = surface_t::FACE_DEEP_OCEAN;
+				deep.push_back(f);
+			} else if (pm2 > -0.1 && pm2 < 0.1) {
+				f->type = surface_t::FACE_DEEP_OCEAN;
+				deep2.push_back(f);
+			}
+		}
+	}
+	begin = std::chrono::steady_clock::now();
+	std::random_shuffle(deep.begin(), deep.end());
+
+	std::vector<surface_t *> roots;
+
+	for (int i = 0; i < 64; i++) {
+		if (deep.empty())
+			break;
+		auto root = deep.back();
+		deep.pop_back();
+		point3_t cc = root->get_center_c();
+		double pm = SimplexNoise::noise(300 + noise_offset + cc[0], cc[1], cc[2]);
+		if (root->type != surface_t::FACE_DEEP_OCEAN || pm < 0) {
+			i--;
+			continue;
+		}
+		roots.push_back(root);
+		iterate_land(root, (double)rand() / (double)RAND_MAX * 4.0);
+	}
+
+	for (int i = 0; i < 32; i++) {
+		if (deep2.empty())
+			break;
+		auto root = deep2.back();
+		deep2.pop_back();
+		point3_t cc = root->get_center_c();
+		double pm = SimplexNoise::noise(500 + noise_offset + cc[0], cc[1], cc[2]);
+		if (root->type != surface_t::FACE_DEEP_OCEAN || pm < 0) {
+			i--;
+			continue;
+		}
+		roots.push_back(root);
+		iterate_land(root, (double)rand() / (double)RAND_MAX * 8.0);
+	}
+
+	for (auto &f : deep) {
+		if (f->type == surface_t::FACE_DEEP_OCEAN)
+			f->type = surface_t::FACE_WATER;
+	}
+
+	for (auto &f : deep2) {
+		if (f->type == surface_t::FACE_DEEP_OCEAN)
+			f->type = surface_t::FACE_WATER;
+	}
+
+	deep.clear();
+	deep2.clear();
+	end = std::chrono::steady_clock::now();
+	std::cout << "Elapsed: "
+		<< std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count()
+		<< "[us]" << std::endl;
+
 	std::cout << "Setting Height Map...\n";
 	begin = std::chrono::steady_clock::now();
 	for (auto &f : faces) {
@@ -429,6 +501,12 @@ world_t::world_t(const int &SEED)
 
 	std::cout << "Setting Water Types...\n";
 	begin = std::chrono::steady_clock::now();
+
+	for (auto &f : roots) {
+		if (!f->borders_ocean() && rand() % 2 == 0)
+			f->type = surface_t::FACE_FLOWING;
+	}
+	roots.clear();
 	for (auto &f : faces) {
 		if (f->type != surface_t::FACE_WATER)
 			continue;
