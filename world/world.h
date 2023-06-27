@@ -4,9 +4,9 @@
 
 #define HEIGHT_MULTIPLIER		1.0
 #define ARIDITY_MULTIPLIER		1.0
-#define INLAND_LAKE_SIZE		64
-#define ISLAND_SEED_COUNT		16
-#define ISLAND_BRANCHING_SIZE	32
+#define INLAND_LAKE_SIZE		32
+#define ISLAND_SEED_COUNT		8
+#define ISLAND_BRANCHING_SIZE	64
 #define FACE_SIZE				1
 
 /* -------------------------- */

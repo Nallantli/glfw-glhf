@@ -9,6 +9,58 @@
 #include <glm/gtx/string_cast.hpp>
 #include <bits/stdc++.h>
 
+#include "../FONT.h"
+
+void engine_t::draw_letter(const char &c, const double &size, const double &x, const double &y)
+{
+	const long long data = FONT_CHAR_MAP.at(c);
+
+	double _x = 0;
+	double _y = 0;
+
+	for (long long i = 39LL; i >= 0LL; i--)
+	{
+		if ((data & (1LL << i)) >> i == 1LL)
+		{
+			glBegin(GL_QUADS);
+			glVertex2d((x + _x * size) / ((double)this->_screenWidth / 2.0) - 1.0, -((y + _y * size) / ((double)this->_screenHeight / 2.0) - 1.0));
+			glVertex2d((x + (_x + 1.0) * size) / ((double)this->_screenWidth / 2.0) - 1.0, -((y + _y * size) / ((double)this->_screenHeight / 2.0) - 1.0));
+			glVertex2d((x + (_x + 1.0) * size) / ((double)this->_screenWidth / 2.0) - 1.0, -((y + (_y + 1.0) * size) / ((double)this->_screenHeight / 2.0) - 1.0));
+			glVertex2d((x + _x * size) / ((double)this->_screenWidth / 2.0) - 1.0, -((y + (_y + 1.0) * size) / ((double)this->_screenHeight / 2.0) - 1.0));
+			glEnd();
+		}
+		_x++;
+		if (i % 5LL == 0LL)
+		{
+			_x = 0;
+			_y++;
+		}
+	}
+}
+
+void engine_t::draw_string(const std::string &s, const double &size, const double &x, const double &y)
+{
+	double _x = 0;
+	double _y = 0;
+	for (auto &c : s)
+	{
+		switch (c)
+		{
+		case '\n':
+			_y += size * 9.0;
+			_x = 0;
+			break;
+		case ' ':
+			_x += size * 6.0;
+			break;
+		default:
+			draw_letter(c, size, x + _x, y + _y);
+			_x += size * 6.0;
+			break;
+		}
+	}
+}
+
 /*static std::string load_shader(const std::string &filename)
 {
 	std::ifstream file(filename);
@@ -123,7 +175,7 @@ void engine_t::init_engine()
 		_screenHeight = DM.w * 0.4;
 		_resRatio = (double)_screenWidth / (double)_screenHeight;
 	}
-	_window = SDL_CreateWindow("My Title", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
+	_window = SDL_CreateWindow("Planet Display", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, _screenWidth, _screenHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (_window == nullptr) {
 		std::cerr << "SDL_window could not be created.";
 	}
@@ -196,6 +248,10 @@ void engine_t::render_world()
 	// clear screen
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glColor3ub(255, 255, 255);
+	draw_string("Pitch: " + std::to_string(_cam->pit) + "\nYaw: " + std::to_string(_cam->yaw), 5, 10, 10);
+
 	// set ocean color
 	glColor3ub(26, 26, 102);
 

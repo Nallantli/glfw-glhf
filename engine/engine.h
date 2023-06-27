@@ -43,6 +43,8 @@ public:
     void run();
 
 private:
+    void draw_letter(const char &c, const double &size, const double &x, const double &y);
+    void draw_string(const std::string &s, const double &size, const double &x, const double &y);
     void init_engine();
     void draw_secant_line(const polar_t &a, const polar_t &b);
     void draw_shape(const surface_t *s);
